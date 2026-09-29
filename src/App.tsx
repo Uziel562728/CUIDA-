@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { Capacitor } from '@capacitor/core';
 import AppLayout from './components/layout/AppLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
 import Login from './pages/Login';
@@ -26,7 +28,6 @@ import Cuidadores from './pages/Cuidadores';
 import Incidentes from './pages/Incidentes';
 import Documentos from './pages/Documentos';
 import Configuracion from './pages/Configuracion';
-
 const Placeholder = ({ title }: { title: string }) => (
   <div className="p-8 text-center">
     <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
@@ -36,6 +37,9 @@ const Placeholder = ({ title }: { title: string }) => (
 
 function App() {
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      CapacitorUpdater.notifyAppReady();
+    }
     const handleBackButton = async (event: { canGoBack: boolean }) => {
       // Create a custom event that can be cancelled
       const customEvent = new CustomEvent('hardwareBackPress', { cancelable: true });
