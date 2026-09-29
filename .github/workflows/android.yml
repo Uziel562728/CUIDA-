@@ -26,9 +26,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: '17'
-
-      # Removed android-actions/setup-android@v3 as it failed and ubuntu-latest already has Android SDK
+          java-version: '21'
 
       - name: Install Dependencies
         run: npm ci
@@ -36,37 +34,53 @@ jobs:
       - name: Build Web App & Sync Capacitor
         run: npm run build:mobile
 
-      - name: Build Release APK
+      - name: Fix gradlew permissions
         working-directory: ./android
+        run: chmod +x gradlew
+
+      - name: Build Debug APK (Prueba tecnica)
+        working-directory: ./android
+        run: ./gradlew assembleDebug
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+
+      - name: Check Keystore Secrets
         run: |
-          chmod +x gradlew
-          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-            echo "Building SIGNED Release APK"
-            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/release.jks
-            ./gradlew assembleRelease \
-              -Pandroid.injected.signing.store.file=release.jks \
-              -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-              -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-              -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-              -PversionCode=${{ github.run_number }}
-          else
-            echo "Building UNSIGNED Release APK (Keystore secrets not found)"
-            ./gradlew assembleRelease -PversionCode=${{ github.run_number }}
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "::error::Faltan los secretos de firma (KEYSTORE_BASE64). No se puede publicar una APK Release final sin firma. Por favor configura los GitHub Secrets."
+            exit 1
           fi
 
-      - name: Rename APK
+      - name: Build Signed Release APK
+        working-directory: ./android
+        env:
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS_VAL: ${{ secrets.KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
-            mv android/app/build/outputs/apk/release/app-release.apk CUIDA-Release.apk
-          elif [ -f "android/app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
-            mv android/app/build/outputs/apk/release/app-release-unsigned.apk CUIDA-Release-unsigned.apk
-          fi
+          echo "Building SIGNED Release APK"
+          # Convertir base64 a jks usando la ruta absoluta segura para evitar problemas de Gradle
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > $(pwd)/app/release.jks
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/release.jks \
+            -Pandroid.injected.signing.store.password="${KEYSTORE_PASS}" \
+            -Pandroid.injected.signing.key.alias="${KEY_ALIAS_VAL}" \
+            -Pandroid.injected.signing.key.password="${KEY_PASS}" \
+            -PversionCode=${{ github.run_number }}
+
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/release/app-release.apk CUIDA-Release.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: CUIDA-Release*.apk
+          files: CUIDA-Release.apk
           generate_release_notes: true
           draft: false
           prerelease: false

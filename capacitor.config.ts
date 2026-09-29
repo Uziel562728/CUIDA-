@@ -7,8 +7,7 @@ const config: CapacitorConfig = {
   plugins: {
     CapacitorUpdater: {
       autoUpdate: true,
-      channel: 'production', // Cambiar a 'test' para probar versiones
-      updateUrl: 'https://api.capgo.app/v1/apps/com.cuida.app/updates', // Requerido si se usa el servicio cloud de Capgo
+      defaultChannel: 'production'
     }
   }
 };
