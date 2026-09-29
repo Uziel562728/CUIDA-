@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CUIDA+</string>
+    <string name="title_activity_main">CUIDA+</string>
+    <string name="package_name">com.cuida.app</string>
+    <string name="custom_url_scheme">com.cuida.app</string>
+</resources>

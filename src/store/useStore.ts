@@ -66,12 +66,20 @@ interface AppState {
   updateReminder: (id: string, updates: Partial<Reminder>) => void;
 
   updateProviderProduct: (providerId: string, productId: string, updates: any) => void;
+
+  quoteRequests: import('../types').QuoteRequest[];
+  addQuoteRequest: (productId: string, productName: string) => void;
+  respondQuoteRequest: (requestId: string, providerId: string, providerName: string, price: number, presentation: string, unitsPerPackage: number) => void;
+
+  caregiverRates: import('../types').CaregiverRate[];
+  setCaregiverRate: (caregiverId: string, period: string, hourlyRate: number) => void;
+  correctShift: (shiftId: string, newDate: string, newStartTime: string, newEndDate: string, newEndTime: string, reason: string) => void;
 }
 
 import { 
   demoPatient, demoProducts, demoTreatments, demoCaregivers, 
   demoReminders, demoEvents, demoVitals, demoIncidents, 
-  demoProviders, demoOrders, demoDocuments 
+  demoProviders, demoOrders, demoDocuments, demoShifts
 } from './demoData';
 
 const initialState = {
@@ -80,7 +88,7 @@ const initialState = {
   treatments: demoTreatments,
   doses: [] as Dose[],
   timeline: demoEvents,
-  shifts: [] as Shift[],
+  shifts: demoShifts,
   caregivers: demoCaregivers,
   incidents: demoIncidents,
   vitalSigns: demoVitals,
@@ -89,6 +97,8 @@ const initialState = {
   cart: [] as CartItem[],
   documents: demoDocuments,
   reminders: demoReminders,
+  quoteRequests: [] as import('../types').QuoteRequest[],
+  caregiverRates: [] as import('../types').CaregiverRate[],
 };
 
 export const useStore = create<AppState>()(
@@ -545,6 +555,115 @@ export const useStore = create<AppState>()(
             products: prov.products.map(prod => prod.productId === productId ? { ...prod, ...updates } : prod)
           } : prov)
         }));
+      },
+
+      addQuoteRequest: (productId, productName) => {
+        set(state => {
+          if (state.quoteRequests.find(q => q.productId === productId && q.status === 'pending')) return state;
+          const req: import('../types').QuoteRequest = {
+            id: Date.now().toString(),
+            productId,
+            productName,
+            date: getLocalDateString(),
+            status: 'pending',
+            responses: []
+          };
+          return { quoteRequests: [req, ...state.quoteRequests] };
+        });
+      },
+
+      respondQuoteRequest: (requestId, providerId, providerName, price, presentation, unitsPerPackage) => {
+        set(state => {
+          const req = state.quoteRequests.find(r => r.id === requestId);
+          if (!req) return state;
+
+          const newRequests = state.quoteRequests.map(r => {
+            if (r.id === requestId) {
+              const hasResponded = r.responses.some(resp => resp.providerId === providerId);
+              if (hasResponded) return r;
+              return {
+                ...r,
+                status: 'answered' as const,
+                responses: [...r.responses, { providerId, providerName, price, presentation, unitsPerPackage, date: getLocalDateString() }]
+              };
+            }
+            return r;
+          });
+
+          // Also add to provider's catalog so it appears in the marketplace
+          const newProviders = state.providers.map(p => {
+            if (p.id === providerId) {
+              const existingIdx = p.products.findIndex(prod => prod.productId === req.productId);
+              if (existingIdx >= 0) {
+                const newProds = [...p.products];
+                newProds[existingIdx] = { ...newProds[existingIdx], price, presentation, unitsPerPackage, stock: 'available' as const };
+                return { ...p, products: newProds };
+              } else {
+                return { 
+                  ...p, 
+                  products: [...p.products, { productId: req.productId, name: req.productName, presentation, unitsPerPackage, price, stock: 'available' as const, delivery: 'Por confirmar' }] 
+                };
+              }
+            }
+            return p;
+          });
+
+          return { quoteRequests: newRequests, providers: newProviders };
+        });
+      },
+
+      setCaregiverRate: (caregiverId, period, hourlyRate) => {
+        if (!get().currentUser || !hasPermission(get().currentUser!.role, 'manage_caregivers')) throw new Error('Permisos insuficientes');
+        set(state => {
+          const rates = [...state.caregiverRates];
+          const idx = rates.findIndex(r => r.caregiverId === caregiverId && r.period === period);
+          if (idx >= 0) {
+            rates[idx] = { ...rates[idx], hourlyRate };
+          } else {
+            rates.push({ caregiverId, period, hourlyRate });
+          }
+          return { caregiverRates: rates };
+        });
+      },
+
+      correctShift: (shiftId, newDate, newStartTime, newEndDate, newEndTime, reason) => {
+        if (!get().currentUser || !hasPermission(get().currentUser!.role, 'manage_caregivers')) throw new Error('Permisos insuficientes');
+        set(state => {
+          const shift = state.shifts.find(s => s.id === shiftId);
+          if (!shift) return state;
+
+          const correction = {
+            originalDate: shift.date,
+            originalStartTime: shift.startTime,
+            originalEndDate: shift.endDate,
+            originalEndTime: shift.endTime,
+            reason,
+            correctedBy: state.currentUser!.name,
+            correctedAt: getLocalDateString() + ' ' + getLocalTimeString()
+          };
+
+          const event: TimelineEvent = {
+            id: Date.now().toString(),
+            date: getLocalDateString(),
+            time: getLocalTimeString(),
+            type: 'shift',
+            title: 'Turno corregido',
+            description: `Turno de ${shift.userName} corregido. Motivo: ${reason}`,
+            user: state.currentUser!.name
+          };
+
+          return {
+            shifts: state.shifts.map(s => s.id === shiftId ? {
+              ...s,
+              date: newDate,
+              startTime: newStartTime,
+              endDate: newEndDate,
+              endTime: newEndTime,
+              corrections: [...(s.corrections || []), correction]
+            } : s),
+            timeline: [event, ...state.timeline]
+          };
+        });
       }
 
     }),

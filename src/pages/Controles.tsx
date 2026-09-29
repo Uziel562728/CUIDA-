@@ -4,11 +4,16 @@ import { getLocalDateString, getLocalTimeString } from '../utils/date';
 import { Activity, Plus, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { VitalSign } from '../types';
 import { hasPermission } from '../lib/permissions';
+import { useHardwareBack } from '../hooks/useHardwareBack';
 
 export default function Controles() {
   const { vitalSigns, addVitalSign, currentUser } = useStore();
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ type: 'pressure', value: '', unit: 'mmHg' });
+  const [errorMsg, setErrorMsg] = useState('');
+
+  useHardwareBack(showModal, () => setShowModal(false));
+  useHardwareBack(!!errorMsg, () => setErrorMsg(''));
 
   const types = [
     { id: 'pressure', label: 'Presión Arterial', unit: 'mmHg', placeholder: '120/80', regex: /^\d{2,3}\/\d{2,3}$/ },
@@ -28,7 +33,7 @@ export default function Controles() {
     
     const typeObj = types.find(t => t.id === form.type);
     if (typeObj && typeObj.regex && !typeObj.regex.test(form.value)) {
-      alert(`Formato inválido para ${typeObj.label}. Ejemplo: ${typeObj.placeholder}`);
+      setErrorMsg(`Formato inválido para ${typeObj.label}. Ejemplo: ${typeObj.placeholder}`);
       return;
     }
     
@@ -46,10 +51,9 @@ export default function Controles() {
   };
 
   const getTrend = (current: VitalSign) => {
-    // Buscar el inmediato anterior del mismo tipo
     const sameType = vitalSigns.filter(v => v.type === current.type).sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
     const currentIndex = sameType.findIndex(v => v.id === current.id);
-    if (currentIndex === -1 || currentIndex === sameType.length - 1) return null; // no hay anterior
+    if (currentIndex === -1 || currentIndex === sameType.length - 1) return null;
 
     const prev = sameType[currentIndex + 1];
     
@@ -69,28 +73,40 @@ export default function Controles() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 max-w-2xl mx-auto">
+      
+      {/* Error Modal */}
+      {errorMsg && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm text-center">
+            <h3 className="text-xl font-bold text-danger mb-2">Error</h3>
+            <p className="text-gray-600 mb-6">{errorMsg}</p>
+            <button onClick={() => setErrorMsg('')} className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-bold w-full">Cerrar</button>
+          </div>
+        </div>
+      )}
+
       <header className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Signos Vitales</h2>
-          <p className="text-gray-500">Registro histórico y evolución</p>
+          <p className="text-gray-500">Registro histórico</p>
         </div>
         {canWrite && (
-          <button onClick={() => setShowModal(true)} className="bg-primary text-white px-4 py-2 rounded-lg flex items-center">
-            <Plus className="w-5 h-5 mr-1" /> Nuevo Control
+          <button onClick={() => setShowModal(true)} className="bg-primary text-white p-3 md:px-4 md:py-2 rounded-full md:rounded-lg flex items-center shadow-md hover:bg-primary-light">
+            <Plus className="w-5 h-5 md:mr-1" /> <span className="hidden md:inline">Nuevo</span>
           </button>
         )}
       </header>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-xl font-bold mb-4">Registrar Control</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Tipo de control</label>
                 <select 
-                  className="w-full border rounded-lg p-2" 
+                  className="w-full border rounded-lg p-3 bg-gray-50" 
                   value={form.type} 
                   onChange={e => setForm({ ...form, type: e.target.value, unit: types.find(t => t.id === e.target.value)?.unit || '' })}
                 >
@@ -102,39 +118,39 @@ export default function Controles() {
                 <input 
                   type="text" 
                   required 
-                  className="w-full border rounded-lg p-2" 
+                  className="w-full border rounded-lg p-3 bg-gray-50" 
                   placeholder={types.find(t => t.id === form.type)?.placeholder}
                   value={form.value} 
                   onChange={e => setForm({ ...form, value: e.target.value })} 
                 />
               </div>
-              <div className="flex justify-end space-x-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg">Guardar</button>
+              <div className="flex space-x-3 pt-4">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-3 bg-gray-100 text-gray-800 rounded-xl font-bold">Cancelar</button>
+                <button type="submit" className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-bold">Guardar</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border p-4 space-y-4">
+      <div className="bg-white rounded-2xl shadow-sm border p-4 space-y-4">
         {vitalSigns.length === 0 && <p className="text-gray-500 py-4 text-center">No hay registros.</p>}
         {vitalSigns.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time)).map(v => {
           const trend = getTrend(v);
           return (
-            <div key={v.id} className="flex justify-between items-center border-b pb-3 last:border-0">
+            <div key={v.id} className="flex justify-between items-center border-b border-gray-100 pb-4 last:border-0 last:pb-0">
               <div className="flex items-center">
-                <Activity className="w-8 h-8 p-1.5 rounded-full bg-info/10 text-info mr-3" />
+                <Activity className="w-10 h-10 p-2 rounded-full bg-info/10 text-info mr-3 flex-shrink-0" />
                 <div>
-                  <p className="font-bold">{types.find(t => t.id === v.type)?.label || v.type}</p>
+                  <p className="font-bold text-gray-900">{types.find(t => t.id === v.type)?.label || v.type}</p>
                   <p className="text-xs text-gray-500">{v.date} {v.time} • {v.registeredBy}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                {trend === 'up' && <span title="Aumentó respecto al control anterior"><TrendingUp className="w-4 h-4 text-danger" /></span>}
-                {trend === 'down' && <span title="Disminuyó respecto al control anterior"><TrendingDown className="w-4 h-4 text-health" /></span>}
-                {trend === 'flat' && <span title="Sin cambios"><Minus className="w-4 h-4 text-gray-400" /></span>}
-                <div className="text-lg font-bold w-20 text-right">{v.value} <span className="text-sm font-normal text-gray-500">{v.unit}</span></div>
+              <div className="flex items-center space-x-2">
+                {trend === 'up' && <TrendingUp className="w-4 h-4 text-danger" />}
+                {trend === 'down' && <TrendingDown className="w-4 h-4 text-health" />}
+                {trend === 'flat' && <Minus className="w-4 h-4 text-gray-400" />}
+                <div className="text-lg font-bold w-20 text-right text-gray-900">{v.value} <span className="text-sm font-normal text-gray-500">{v.unit}</span></div>
               </div>
             </div>
           )

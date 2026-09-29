@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
+import { App as CapacitorApp } from '@capacitor/app';
 import AppLayout from './components/layout/AppLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
 import Login from './pages/Login';
@@ -16,8 +17,11 @@ import Mas from './pages/Mas';
 import Controles from './pages/Controles';
 import Recordatorios from './pages/Recordatorios';
 import Turnos from './pages/Turnos';
+import Horas from './pages/Horas';
 import ProviderPedidos from './pages/ProviderPedidos';
 import ProviderCatalogo from './pages/ProviderCatalogo';
+import ProviderCotizaciones from './pages/ProviderCotizaciones';
+import ProviderMas from './pages/ProviderMas';
 import Cuidadores from './pages/Cuidadores';
 import Incidentes from './pages/Incidentes';
 import Documentos from './pages/Documentos';
@@ -31,6 +35,37 @@ const Placeholder = ({ title }: { title: string }) => (
 );
 
 function App() {
+  useEffect(() => {
+    const handleBackButton = async (event: { canGoBack: boolean }) => {
+      // Create a custom event that can be cancelled
+      const customEvent = new CustomEvent('hardwareBackPress', { cancelable: true });
+      window.dispatchEvent(customEvent);
+      
+      if (customEvent.defaultPrevented) {
+        // Un modal o wizard interceptó el botón atrás
+        return;
+      }
+
+      if (event.canGoBack) {
+        // Estamos en una ruta con historial
+        window.history.back();
+      } else {
+        // En la raíz, en vez de salir de golpe, podríamos preguntar
+        // pero dado que no queremos usar confirm nativo, 
+        // simplemente no salimos a menos que disparemos un modal global.
+        // Por ahora, como se pide evitar salida accidental, lo ignoramos o simulamos.
+        // Podríamos permitir salir si es la pantalla de login, o dashboard.
+        // Dado el alcance, emitiremos un evento de salir, o simplemente nada.
+      }
+    };
+
+    // Solo eliminamos el listener que agregamos (aunque removeListener retorna una promesa, la omitimos en un unmount simple de web, pero en React 18+ strict mode puede correr dos veces, por lo que devolvemos la función de limpieza que guarda el listener real si usáramos la promesa, pero addListener en Capacitor 3+ retorna un objeto con .remove()).
+    let listener = CapacitorApp.addListener('backButton', handleBackButton);
+    return () => {
+      listener.then(l => l.remove());
+    };
+  }, []);
+
   return (
     <HashRouter>
       <Routes>
@@ -50,6 +85,7 @@ function App() {
           <Route path="controles" element={<Controles />} />
           <Route path="recordatorios" element={<Recordatorios />} />
           <Route path="turnos" element={<Turnos />} />
+          <Route path="horas" element={<Horas />} />
           
           <Route path="cuidadores" element={<Cuidadores />} />
           <Route path="incidentes" element={<Incidentes />} />
@@ -61,6 +97,8 @@ function App() {
           <Route index element={<ProviderPedidos />} />
           <Route path="pedidos" element={<ProviderPedidos />} />
           <Route path="catalogo" element={<ProviderCatalogo />} />
+          <Route path="cotizaciones" element={<ProviderCotizaciones />} />
+          <Route path="mas" element={<ProviderMas />} />
         </Route>
       </Routes>
     </HashRouter>

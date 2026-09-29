@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore'
 import { getLocalDateString, getLocalTimeString } from '../utils/date';
 import { AlertTriangle, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { hasPermission } from '../lib/permissions';
+import { useHardwareBack } from '../hooks/useHardwareBack';
 
 export default function Incidentes() {
   const { incidents, addIncident, updateIncidentState, currentUser } = useStore();
@@ -11,6 +12,8 @@ export default function Incidentes() {
   
   const [trackingId, setTrackingId] = useState<string | null>(null);
   const [trackForm, setTrackForm] = useState({ status: 'following' as any, note: '' });
+
+  useHardwareBack(showModal, () => setShowModal(false));
 
   const canWrite = currentUser && hasPermission(currentUser.role, 'register_incident');
 

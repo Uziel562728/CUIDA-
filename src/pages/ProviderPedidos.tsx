@@ -13,6 +13,23 @@ export default function ProviderPedidos() {
         <h2 className="text-2xl font-bold text-gray-900">Gestión de Pedidos</h2>
       </header>
 
+      {providerOrders.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p className="text-gray-500 text-sm">Total Pedidos</p>
+            <p className="text-2xl font-bold">{providerOrders.length}</p>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p className="text-gray-500 text-sm">Pedidos Pendientes</p>
+            <p className="text-2xl font-bold">{providerOrders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length}</p>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <p className="text-gray-500 text-sm">Ingresos Totales</p>
+            <p className="text-2xl font-bold text-health">${providerOrders.reduce((acc, o) => acc + o.total, 0).toLocaleString('es-AR')}</p>
+          </div>
+        </div>
+      )}
+
       {providerOrders.length === 0 ? (
         <div className="bg-white p-12 text-center rounded-xl border border-gray-200">
           <p className="text-gray-500">No hay pedidos recibidos aún.</p>

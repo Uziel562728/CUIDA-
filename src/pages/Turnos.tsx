@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore'
 import { getLocalDateString, getLocalTimeString } from '../utils/date';
 import { Calendar, CheckCircle, Clock } from 'lucide-react';
+import { useHardwareBack } from '../hooks/useHardwareBack';
 
 export default function Turnos() {
   const { shifts, startShift, endShift, currentUser } = useStore();
   
   const [showEndModal, setShowEndModal] = useState(false);
   const [activeShiftId, setActiveShiftId] = useState<string | null>(null);
+
+  useHardwareBack(showEndModal, () => setShowEndModal(false));
   
   const [report, setReport] = useState('');
   const [details, setDetails] = useState({

@@ -93,6 +93,21 @@ export interface Shift {
     sueno: string;
     insumos: string;
   };
+  corrections?: {
+    originalDate: string;
+    originalStartTime: string;
+    originalEndDate?: string;
+    originalEndTime?: string;
+    reason: string;
+    correctedBy: string;
+    correctedAt: string;
+  }[];
+}
+
+export interface CaregiverRate {
+  caregiverId: string;
+  period: string; // 'YYYY-MM'
+  hourlyRate: number;
 }
 
 export interface Incident {
@@ -151,7 +166,7 @@ export interface Order {
   providerName: string;
   items: CartItem[];
   total: number;
-  status: 'placed' | 'paid' | 'accepted' | 'preparing' | 'shipping' | 'delivered';
+  status: 'placed' | 'paid' | 'accepted' | 'preparing' | 'shipping' | 'delivered' | 'cancelled';
   history: { status: string; date: string; time: string; user: string }[];
 }
 
@@ -184,4 +199,20 @@ export interface Reminder {
   repeat: 'once' | 'daily' | 'weekly' | 'custom';
   status: 'pending' | 'completed' | 'cancelled';
   history?: { date: string; time: string; user: string }[];
+}
+
+export interface QuoteRequest {
+  id: string;
+  productId: string;
+  productName: string;
+  date: string;
+  status: 'pending' | 'answered';
+  responses: {
+    providerId: string;
+    providerName: string;
+    price: number;
+    presentation: string;
+    unitsPerPackage: number;
+    date: string;
+  }[];
 }

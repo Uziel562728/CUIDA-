@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { ShoppingCart, Trash2, ArrowRight, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useHardwareBack } from '../hooks/useHardwareBack';
 
 export default function Cart() {
   const { cart, removeFromCart, updateCartQuantity, clearCart, placeOrder, providers, patient } = useStore();
@@ -10,7 +11,9 @@ export default function Cart() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('tarjeta_demo');
   const [paymentRejected, setPaymentRejected] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
+  useHardwareBack(showClearConfirm, () => setShowClearConfirm(false));
   const totalItems = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = totalItems > 0 ? 2000 : 0;
   const finalTotal = totalItems + shipping;
@@ -33,9 +36,8 @@ export default function Cart() {
   };
 
   const handleClear = () => {
-    if (confirm('¿Seguro que deseas vaciar el carrito?')) {
-      clearCart();
-    }
+    clearCart();
+    setShowClearConfirm(false);
   };
 
   if (isSuccess) {
@@ -69,11 +71,24 @@ export default function Cart() {
           </h2>
         </div>
         {cart.length > 0 && (
-          <button onClick={handleClear} className="text-danger font-medium text-sm hover:underline">
+          <button onClick={() => setShowClearConfirm(true)} className="text-danger font-medium text-sm hover:underline">
             Vaciar Carrito
           </button>
         )}
       </header>
+
+      {showClearConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Vaciar carrito</h3>
+            <p className="text-gray-600 mb-6">¿Estás seguro que deseas vaciar el carrito? Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowClearConfirm(false)} className="flex-1 px-4 py-3 bg-gray-100 text-gray-800 rounded-xl font-bold">Cancelar</button>
+              <button onClick={handleClear} className="flex-1 px-4 py-3 bg-danger text-white rounded-xl font-bold">Vaciar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {cart.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">

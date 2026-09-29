@@ -4,6 +4,7 @@ import { Package, ShoppingCart, Plus, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { hasPermission } from '../lib/permissions';
 import { calculateEstimatedConsumption } from '../utils/stock';
+import { useHardwareBack } from '../hooks/useHardwareBack';
 
 export default function Stock() {
   const { products, updateProductStock, currentUser } = useStore();
@@ -11,6 +12,8 @@ export default function Stock() {
   const [showAdjust, setShowAdjust] = useState<string | null>(null);
   const [adjustVal, setAdjustVal] = useState('');
   const [adjustReason, setAdjustReason] = useState('');
+
+  useHardwareBack(!!showAdjust, () => setShowAdjust(null));
 
   const isAdmin = currentUser && hasPermission(currentUser.role, 'manage_stock');
 
@@ -121,6 +124,13 @@ export default function Stock() {
                     <td className="p-4 text-right">
                       {isAdmin && (
                         <div className="flex justify-end space-x-3">
+                          <button 
+                            onClick={() => navigate(`/marketplace?product=${product.id}`)}
+                            className="text-primary hover:text-primary-dark font-medium text-sm flex items-center"
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-1" />
+                            Reponer
+                          </button>
                           <button onClick={() => { setShowAdjust(product.id); setAdjustVal(product.currentQuantity.toString()); }} className="text-gray-400 hover:text-primary">
                             <Edit2 className="w-4 h-4" />
                           </button>

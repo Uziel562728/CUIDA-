@@ -17,6 +17,7 @@ export default function Sidebar({ onLogout }: { onLogout?: () => void }) {
     { icon: Activity, label: 'Controles', path: '/controles' },
     { icon: Users, label: 'Cuidadores', path: '/cuidadores', adminOnly: true },
     { icon: Calendar, label: 'Turnos', path: '/turnos' },
+    { icon: Clock, label: 'Horas y Asistencia', path: '/horas', adminOnly: false },
     { icon: AlertTriangle, label: 'Incidentes', path: '/incidentes' },
     { icon: Package, label: 'Stock', path: '/stock', adminOnly: true },
     { icon: ShoppingCart, label: 'Pedidos', path: '/pedidos', adminOnly: true },

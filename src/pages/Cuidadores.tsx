@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Users, Phone, Plus, Edit2, Trash2 } from 'lucide-react';
 import { hasPermission } from '../lib/permissions';
+import { useHardwareBack } from '../hooks/useHardwareBack';
 
 export default function Cuidadores() {
   const { caregivers, addCaregiver, updateCaregiver, deleteCaregiver, currentUser } = useStore();
@@ -23,6 +24,11 @@ export default function Cuidadores() {
     setShowModal(true);
   };
 
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  
+  useHardwareBack(showModal, () => setShowModal(false));
+  useHardwareBack(!!deleteConfirm, () => setDeleteConfirm(null));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name) return;
@@ -36,7 +42,14 @@ export default function Cuidadores() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('¿Eliminar cuidador?')) deleteCaregiver(id);
+    setDeleteConfirm(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm) {
+      deleteCaregiver(deleteConfirm);
+      setDeleteConfirm(null);
+    }
   };
 
   return (
@@ -83,6 +96,19 @@ export default function Cuidadores() {
                 <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg">Guardar</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Eliminar Cuidador</h3>
+            <p className="text-gray-600 mb-6">¿Estás seguro que deseas eliminar a este cuidador? Esta acción no se puede deshacer.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteConfirm(null)} className="flex-1 px-4 py-3 bg-gray-100 text-gray-800 rounded-xl font-bold">Cancelar</button>
+              <button onClick={confirmDelete} className="flex-1 px-4 py-3 bg-danger text-white rounded-xl font-bold">Eliminar</button>
+            </div>
           </div>
         </div>
       )}

@@ -119,3 +119,15 @@ export const demoDocuments: DocumentRecord[] = [
   { id: 'doc7', date: d(90), name: 'Ecocardiograma', category: 'Estudio', professional: 'Dr. Martínez', description: 'Sin hallazgos' },
   { id: 'doc8', date: d(5), name: 'Certificado Médico', category: 'Informe médico', professional: 'Dr. Roberto García', description: 'Certificado de discapacidad' }
 ];
+
+export const demoShifts: Shift[] = [
+  { id: 'sh1', userId: 'c1', userName: 'María González', role: 'Enfermera Jefa', date: d(2), startTime: '08:00', endDate: d(2), endTime: '16:00', status: 'completed', report: 'Turno normal, sin novedades importantes.' },
+  { id: 'sh2', userId: 'c2', userName: 'Laura Rodríguez', role: 'Cuidadora', date: d(2), startTime: '20:00', endDate: d(1), endTime: '08:00', status: 'completed', report: 'Noche tranquila. Durmió 6 horas de corrido.' },
+  { id: 'sh3', userId: 'c1', userName: 'María González', role: 'Enfermera Jefa', date: d(1), startTime: '08:00', endDate: d(1), endTime: '16:00', status: 'completed', report: 'Control de signos vitales. Se administró medicación.' },
+  { id: 'sh4', userId: 'c2', userName: 'Laura Rodríguez', role: 'Cuidadora', date: d(1), startTime: '20:00', endDate: d(0), endTime: '08:00', status: 'completed', report: 'Despertó 2 veces para ir al baño. Se hidrató.' },
+  { id: 'sh5', userId: 'c1', userName: 'María González', role: 'Enfermera Jefa', date: d(0), startTime: '08:00', status: 'active' }, // open shift
+  { id: 'sh6', userId: 'c2', userName: 'Laura Rodríguez', role: 'Cuidadora', date: d(5), startTime: '20:00', endDate: d(4), endTime: '08:00', status: 'completed', report: 'Guardia tranquila.', corrections: [{ originalDate: d(5), originalStartTime: '22:00', reason: 'Olvidó fichar al entrar', correctedBy: 'Admin', correctedAt: d(4) }] },
+  // Overlapping shifts demo
+  { id: 'sh7', userId: 'c3', userName: 'Pedro Sánchez', role: 'Enfermero', date: d(3), startTime: '10:00', endDate: d(3), endTime: '14:00', status: 'completed', report: 'Apoyo fin de semana.' },
+  { id: 'sh8', userId: 'c3', userName: 'Pedro Sánchez', role: 'Enfermero', date: d(3), startTime: '12:00', endDate: d(3), endTime: '18:00', status: 'completed', report: 'Doble turno.' }
+];
