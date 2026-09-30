@@ -59,7 +59,7 @@ export default function Mas() {
 
   return (
     <div className="space-y-6 max-w-lg mx-auto pb-10">
-      <h2 className="text-2xl font-bold text-gray-900 px-2">Más Opciones</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 px-2">Más Opciones</h2>
       
       {categories.map((cat, idx) => {
         const visibleItems = cat.items.filter(item => canAccessRoute(currentUser.role, item.path));
@@ -67,19 +67,19 @@ export default function Mas() {
         
         return (
           <div key={idx} className="mb-6">
-            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider px-4 mb-2">{cat.title}</h3>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <h3 className="text-sm font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wider px-4 mb-2">{cat.title}</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
               {visibleItems.map((item, i) => (
                 <button
                   key={i}
                   onClick={() => navigate(item.path)}
-                  className="w-full flex items-center justify-between p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between p-4 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <div className="flex items-center text-gray-700">
+                  <div className="flex items-center text-gray-700 dark:text-gray-100">
                     <item.icon className="w-5 h-5 mr-3 text-primary" />
                     <span className="font-medium">{item.label}</span>
                   </div>
-                  <span className="text-gray-300">›</span>
+                  <span className="text-gray-400 dark:text-gray-300">›</span>
                 </button>
               ))}
             </div>
@@ -89,10 +89,10 @@ export default function Mas() {
 
       {isSponsorsEnabled && (
         <div className="mb-6">
-          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider px-4 mb-2">Aliados</h3>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 grid grid-cols-2 gap-4">
-            {SponsorsList.map(Sponsor => (
-              <div key={Sponsor.id} className="flex items-center justify-center p-2 h-16">
+          <h3 className="text-sm font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wider px-4 mb-2">Aliados</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 grid grid-cols-2 gap-4">
+            {SponsorsList.map((Sponsor, index) => (
+              <div key={Sponsor.id} className={`flex items-center justify-center p-2 h-20 min-w-0 rounded-xl bg-gray-50 dark:bg-gray-700/70 ${index === SponsorsList.length - 1 && SponsorsList.length % 2 === 1 ? 'col-span-2 justify-self-center w-[calc(50%-0.5rem)]' : ''}`}>
                 <Sponsor.Component className="w-full h-full" />
               </div>
             ))}
@@ -100,10 +100,10 @@ export default function Mas() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-6">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center p-4 hover:bg-red-50 transition-colors"
+          className="w-full flex items-center p-4 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
         >
           <div className="flex items-center text-danger font-medium">
             <LogOut className="w-5 h-5 mr-3" />

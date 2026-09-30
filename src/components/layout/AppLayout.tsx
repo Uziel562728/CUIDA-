@@ -9,8 +9,7 @@ import { motion } from 'framer-motion';
 import { canAccessRoute } from '../../lib/permissions';
 
 export default function AppLayout() {
-  const { currentUser, setCurrentUser, patient, generateDosesForDay, hasSeenWelcome } = useStore();
-  if (!hasSeenWelcome) return <Navigate to="/welcome" replace />;
+  const { currentUser, setCurrentUser, patient, generateDosesForDay } = useStore();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -51,7 +50,7 @@ export default function AppLayout() {
     <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 transition-colors">
       <Sidebar onLogout={handleLogout} />
       <div className="flex-1 flex flex-col pb-16 md:pb-0 md:ml-64">
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 md:px-8 z-10 sticky top-0">
+        <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between px-4 md:px-8 z-10 sticky top-0">
           <div className="flex items-center">
             <h1 className="text-xl font-semibold text-primary hidden md:block">CUIDA+</h1>
             <div className="md:hidden">

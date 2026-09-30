@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
@@ -39,6 +39,8 @@ const Placeholder = ({ title }: { title: string }) => (
 );
 
 function App() {
+  // Per process: a fresh launch shows the welcome screen even if it was seen before.
+  const [showStartup, setShowStartup] = useState(true);
   const { theme, primaryColor, currentUser, notificationsPermissionRequested, setNotificationsPermissionRequested, setNotificationsEnabled } = useStore();
 
   
@@ -123,6 +125,7 @@ function App() {
 
   return (
     <HashRouter>
+      {showStartup ? <Welcome onComplete={() => setShowStartup(false)} /> : (
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/welcome" element={<Welcome />} />
@@ -158,6 +161,7 @@ function App() {
           <Route path="configuracion" element={<Configuracion />} />
         </Route>
       </Routes>
+      )}
     </HashRouter>
   );
 }

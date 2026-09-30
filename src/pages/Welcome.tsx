@@ -8,9 +8,9 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { Capacitor } from '@capacitor/core';
 import { isSponsorsEnabled } from '../config/sponsors';
 
-export default function Welcome() {
+export default function Welcome({ onComplete }: { onComplete?: () => void }) {
   const navigate = useNavigate();
-  const { setHasSeenWelcome } = useStore();
+  const currentUser = useStore(state => state.currentUser);
   const [showLogos, setShowLogos] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
@@ -34,8 +34,19 @@ export default function Welcome() {
     return () => clearTimeout(timer);
   }, []);
 
+  // A remembered user sees the welcome/loading sequence on every cold launch.
+  // There is no skip button while their session is being restored.
+  useEffect(() => {
+    if (!currentUser) return;
+    const timer = setTimeout(() => {
+      onComplete?.();
+      navigate(currentUser.role === 'supplier' ? '/proveedor' : '/', { replace: true });
+    }, isSponsorsEnabled ? 4000 : 2000);
+    return () => clearTimeout(timer);
+  }, [currentUser, navigate, onComplete]);
+
   const handleContinue = () => {
-    setHasSeenWelcome(true);
+    onComplete?.();
     navigate('/login', { replace: true });
   };
 
@@ -99,14 +110,14 @@ export default function Welcome() {
                   }
                 }}
               >
-                {SponsorsList.map((sponsor) => (
+                {SponsorsList.map((sponsor, index) => (
                   <motion.div
                     key={sponsor.id}
                     variants={{
                       hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 10 },
                       visible: { opacity: 1, y: 0 }
                     }}
-                    className="bg-white dark:bg-gray-800 p-2 rounded-xl shadow-sm flex items-center justify-center h-24"
+                    className={`bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-2 rounded-xl shadow-sm flex items-center justify-center h-24 min-w-0 ${index === SponsorsList.length - 1 && SponsorsList.length % 2 === 1 ? 'col-span-2 justify-self-center w-[calc(50%-0.5rem)]' : ''}`}
                   >
                     <sponsor.Component />
                   </motion.div>
@@ -123,7 +134,7 @@ export default function Welcome() {
       </div>
 
       {/* Action Button - Visible Immediately */}
-      <motion.div 
+      {!currentUser && <motion.div
         className="p-6 relative z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -136,7 +147,7 @@ export default function Welcome() {
           {showLogos || !isSponsorsEnabled ? 'Continuar' : 'Omitir'}
           <ChevronRight className="w-5 h-5 ml-2" />
         </button>
-      </motion.div>
+      </motion.div>}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { useStore } from '../store/useStore'
 import { getLocalDateString } from '../utils/date';
@@ -17,8 +17,7 @@ const demoUsers: User[] = [
 ];
 
 export default function Login() {
-  const { setCurrentUser, generateDosesForDay, hasSeenWelcome } = useStore();
-  if (!hasSeenWelcome) return <Navigate to="/welcome" replace />;
+  const { setCurrentUser, generateDosesForDay } = useStore();
   const navigate = useNavigate();
 
   // En la demo generamos las dosis del día al ver la pantalla de login (simulando backend de medianoche)

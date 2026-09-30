@@ -8,6 +8,41 @@
 }
 
 @layer utilities {
+  /* Legacy screens still use light-only Tailwind classes. Keep those surfaces
+     readable in dark mode without changing brand artwork or explicit dark styles. */
+  :root.dark #root [class~="bg-white"]:not([class*="dark:bg-"]):not(.brand-logo-plate) { background-color: #1f2937; }
+  :root.dark #root [class~="bg-gray-50"]:not([class*="dark:bg-"]) { background-color: #111827; }
+  :root.dark #root [class~="bg-gray-100"]:not([class*="dark:bg-"]) { background-color: #374151; }
+  :root.dark #root [class~="bg-gray-200"]:not([class*="dark:bg-"]) { background-color: #4b5563; }
+  :root.dark #root [class~="text-gray-900"]:not([class*="dark:text-"]) { color: #f9fafb; }
+  :root.dark #root [class~="text-gray-800"]:not([class*="dark:text-"]) { color: #f3f4f6; }
+  :root.dark #root [class~="text-gray-700"]:not([class*="dark:text-"]),
+  :root.dark #root [class~="text-gray-600"]:not([class*="dark:text-"]) { color: #d1d5db; }
+  :root.dark #root [class~="text-gray-500"]:not([class*="dark:text-"]) { color: #9ca3af; }
+  :root.dark #root [class~="border-gray-100"]:not([class*="dark:border-"]),
+  :root.dark #root [class~="border-gray-200"]:not([class*="dark:border-"]),
+  :root.dark #root [class~="border-gray-300"]:not([class*="dark:border-"]) { border-color: #374151; }
+  :root.dark #root [class~="bg-blue-50"]:not([class*="dark:bg-"]) { background-color: #172554; }
+  :root.dark #root [class~="bg-red-50"]:not([class*="dark:bg-"]),
+  :root.dark #root [class~="bg-red-100"]:not([class*="dark:bg-"]) { background-color: #450a0a; }
+  :root.dark #root [class~="bg-green-100"]:not([class*="dark:bg-"]) { background-color: #052e16; }
+  :root.dark #root [class~="bg-yellow-50"]:not([class*="dark:bg-"]),
+  :root.dark #root [class~="bg-yellow-100"]:not([class*="dark:bg-"]) { background-color: #422006; }
+  :root.dark #root [class~="text-blue-900"]:not([class*="dark:text-"]),
+  :root.dark #root [class~="text-blue-800"]:not([class*="dark:text-"]) { color: #bfdbfe; }
+  :root.dark #root [class~="text-red-900"]:not([class*="dark:text-"]),
+  :root.dark #root [class~="text-red-800"]:not([class*="dark:text-"]),
+  :root.dark #root [class~="text-red-700"]:not([class*="dark:text-"]) { color: #fecaca; }
+  :root.dark #root [class~="text-green-800"]:not([class*="dark:text-"]),
+  :root.dark #root [class~="text-green-700"]:not([class*="dark:text-"]) { color: #bbf7d0; }
+  :root.dark #root [class~="text-yellow-800"]:not([class*="dark:text-"]) { color: #fef08a; }
+  :root.dark #root :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+    color-scheme: dark;
+    color: #f9fafb;
+    background-color: #1f2937;
+    border-color: #4b5563;
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
