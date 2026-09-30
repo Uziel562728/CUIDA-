@@ -1,13 +1,14 @@
 {
   "name": "proyecto-de-una-app-para-gente-mayor",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:web": "tsc -b && vite build",
     "build:mobile": "tsc -b && vite build --base=./ && npx cap sync",
+    "build:ota": "tsc -b && vite build --base=./",
     "lint": "oxlint",
     "preview": "vite preview"
   },
