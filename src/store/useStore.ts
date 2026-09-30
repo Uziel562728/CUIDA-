@@ -546,23 +546,35 @@ export const useStore = create<AppState>()(
         if (!get().currentUser || !hasPermission(get().currentUser!.role, 'manage_reminders')) {
           throw new Error('Permisos insuficientes para completar recordatorios.');
         }
-        set((state) => ({
-        reminders: state.reminders.map(r => {
-          if (r.id === id) {
-            if (r.status === 'cancelled') return r;
-            const today = getLocalDateString();
-            const h = r.history || [];
-            if (h.some(entry => entry.date === today)) return r; // Already completed today
-
-            return { 
-              ...r, 
-              status: r.repeat === 'once' ? 'completed' : r.status, 
-              history: [...h, { date: today, time: getLocalTimeString(), user: state.currentUser?.name || 'Sistema' }]
-            };
+        set((state) => {
+          let updatedReminder = null;
+          const newReminders = state.reminders.map(r => {
+            if (r.id === id) {
+              if (r.status === 'cancelled') return r;
+              const today = getLocalDateString();
+              const h = r.history || [];
+              if (h.some(entry => entry.date === today)) return r;
+              
+              updatedReminder = { 
+                ...r, 
+                status: r.repeat === 'once' ? 'completed' : r.status, 
+                history: [...h, { date: today, time: getLocalTimeString(), user: state.currentUser?.name || 'Sistema' }]
+              };
+              return updatedReminder;
+            }
+            return r;
+          });
+          
+          if (updatedReminder && get().notificationsEnabled) {
+            cancelReminderNotification(id).then(() => {
+              if (updatedReminder.status !== 'completed') {
+                scheduleReminderNotification(updatedReminder);
+              }
+            }).catch(console.error);
           }
-          return r;
-        })
-      }));
+          
+          return { reminders: newReminders as any };
+        });
       },
       deleteReminder: (id) => {
         if (!get().currentUser || !hasPermission(get().currentUser!.role, 'manage_reminders')) throw new Error('Permisos insuficientes');
@@ -706,14 +718,16 @@ export const useStore = create<AppState>()(
       name: 'cuida-plus-storage', // unique name
       version: 3, // versioning bumped
       migrate: (persistedState: any, version: number) => {
+        let state = { ...persistedState };
         if (version === 1) {
-          // Si migramos desde v1, conservamos los datos previos combinados con la estructura nueva
-          return {
-            ...initialState,
-            ...persistedState
-          } as any;
+          state = { ...initialState, ...state };
         }
-        return persistedState;
+        if (version < 3) {
+          if (state.primaryColor === '#1E3A5F') {
+            state.primaryColor = '#27AE60';
+          }
+        }
+        return state as any;
       }
     }
   )

@@ -3,7 +3,7 @@
 
 @layer base {
   body {
-    @apply bg-background text-gray-800 antialiased font-sans;
+    @apply bg-background text-gray-800 antialiased font-sans dark:bg-gray-900 dark:text-gray-100 transition-colors;
   }
 }
 
@@ -19,7 +19,7 @@
 
 @layer base {
   :root {
-    --primary-custom: #1E3A5F;
+    --primary-custom: #27AE60;
   }
   .dark {
     --color-white: #1e293b;

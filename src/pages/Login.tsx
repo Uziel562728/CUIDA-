@@ -47,7 +47,7 @@ export default function Login() {
           animate={{ scale: 1, opacity: 1 }}
           className="flex justify-center"
         >
-          <div className="w-20 h-20 bg-white rounded-2xl shadow-xl flex items-center justify-center">
+          <div className="w-20 h-20 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center">
             <HeartPulse className="w-12 h-12 text-primary" />
           </div>
         </motion.div>
@@ -60,7 +60,7 @@ export default function Login() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <div className="bg-white py-8 px-4 shadow-2xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow-2xl shadow-gray-200/50 dark:shadow-none sm:rounded-2xl sm:px-10 border border-gray-100 dark:border-gray-700 transition-colors">
           
           <div className="mb-6">
             <div className="relative">
@@ -68,7 +68,7 @@ export default function Login() {
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500 font-medium">Ingresar como usuario demo</span>
+                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 font-medium">Ingresar como usuario demo</span>
               </div>
             </div>
 
@@ -85,7 +85,7 @@ export default function Login() {
                   <button
                     key={user.id}
                     onClick={() => handleLogin(user)}
-                    className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                   >
                     <span className="font-bold mr-2">{roleName}</span>
                     <span className="text-gray-500">- {user.name}</span>
