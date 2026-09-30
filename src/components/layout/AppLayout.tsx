@@ -46,7 +46,7 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 transition-colors">
       <Sidebar onLogout={handleLogout} />
       <div className="flex-1 flex flex-col pb-16 md:pb-0 md:ml-64">
         <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 md:px-8 z-10 sticky top-0">

@@ -716,13 +716,14 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'cuida-plus-storage', // unique name
-      version: 3, // versioning bumped
+      version: 4, // versioning bumped
       migrate: (persistedState: any, version: number) => {
         let state = { ...persistedState };
         if (version === 1) {
           state = { ...initialState, ...state };
         }
-        if (version < 3) {
+        // Migramos SIEMPRE el azul a verde para instalaciones viejas, incluso si ya habian guardado la v3 defectuosa
+        if (version < 4) {
           if (state.primaryColor === '#1E3A5F') {
             state.primaryColor = '#27AE60';
           }

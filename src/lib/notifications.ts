@@ -3,7 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { Reminder } from '../types';
 
 export const scheduleReminderNotification = async (reminder: Reminder) => {
-  if (!Capacitor.isNativePlatform()) return;
+  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('LocalNotifications')) return;
   
   try {
     const { display } = await LocalNotifications.checkPermissions();
@@ -77,7 +77,7 @@ export const scheduleReminderNotification = async (reminder: Reminder) => {
 };
 
 export const cancelReminderNotification = async (id: string) => {
-  if (!Capacitor.isNativePlatform()) return;
+  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('LocalNotifications')) return;
   try {
     const numericId = hashCode(id);
     await LocalNotifications.cancel({ notifications: [{ id: numericId }] });
@@ -87,7 +87,7 @@ export const cancelReminderNotification = async (id: string) => {
 };
 
 export const cancelAllNotifications = async () => {
-  if (!Capacitor.isNativePlatform()) return;
+  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('LocalNotifications')) return;
   try {
     const pending = await LocalNotifications.getPending();
     if (pending.notifications.length > 0) {

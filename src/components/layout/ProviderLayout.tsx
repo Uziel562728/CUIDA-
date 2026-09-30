@@ -21,8 +21,8 @@ export default function ProviderLayout() {
   const pendingQuotes = quoteRequests.filter(q => q.status === 'pending' || (q.status === 'answered' && !q.responses.some(r => r.providerId === currentUser.providerId))).length;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 pb-16 md:pb-0">
-      <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 border-b border-gray-200 sticky top-0 z-10">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors pb-16 md:pb-0">
+      <header className="bg-white dark:bg-gray-800 transition-colors shadow-sm h-16 flex items-center justify-between px-6 border-b border-gray-200 sticky top-0 z-10">
         <div className="flex items-center">
           <h1 className="text-xl font-bold text-primary mr-8">CUIDA+ Proveedor</h1>
           <nav className="hidden md:flex space-x-4">
@@ -46,7 +46,7 @@ export default function ProviderLayout() {
       </header>
       
       {/* Mobile nav (Bottom Nav for Provider) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 transition-colors border-t border-gray-200 pb-safe z-50">
         <div className="flex justify-around items-center h-16 px-2">
           <NavLink to="/proveedor/pedidos" className={({isActive}) => cn("flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors", isActive ? "text-primary" : "text-gray-400 hover:text-gray-600")}>
             <ShoppingBag className="w-6 h-6"/>
