@@ -74,53 +74,72 @@ jobs:
           npm run build:ota
           test -f dist/index.html
 
-      - name: Configure Capgo Channel
+      - name: Safely Rollback and Isolate Production
         if: steps.native.outputs.skip != 'true'
         env:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
         run: |
-          npx --yes @capgo/cli@latest channel set production com.cuida.app --disable-auto-update metadata --no-downgrade
+          echo "Rolling back production to safe state (1.0.10) to stop untested OTAs..."
+          npx --yes @capgo/cli@latest channel set production com.cuida.app --bundle 1.0.10 --disable-auto-update none || true
 
-      - name: Publish to Capgo production
+      - name: Publish Untethered Bundle for Testing
         if: steps.native.outputs.skip != 'true'
         env:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
         run: |
           APP_VERSION=$(node -p "require('./package.json').version")
-          # Prerelease trap fix: create a version that is strictly > 1.2.2
-          # e.g., 1.2.3-ota.X
           APP_MAJOR_MINOR=$(echo $APP_VERSION | cut -d. -f1,2)
           APP_PATCH=$(echo $APP_VERSION | cut -d. -f3)
           NEXT_PATCH=$((APP_PATCH + 1))
           BUNDLE_VERSION="${APP_MAJOR_MINOR}.${NEXT_PATCH}-ota.${{ github.run_number }}"
           echo "BUNDLE_VERSION=$BUNDLE_VERSION" >> $GITHUB_ENV
           
-          echo "Uploading BUNDLE_VERSION=$BUNDLE_VERSION with min-update-version=$APP_VERSION"
-          npx --yes @capgo/cli@latest bundle upload com.cuida.app --path ./dist --channel production --bundle $BUNDLE_VERSION --min-update-version $APP_VERSION
+          # Use a sandbox channel to upload and test before touching production
+          npx --yes @capgo/cli@latest channel add audit_test com.cuida.app || true
+          npx --yes @capgo/cli@latest bundle upload com.cuida.app --path ./dist --channel audit_test --bundle $BUNDLE_VERSION --min-update-version $APP_VERSION
 
-      - name: Capgo Delivery Verification via Probe
+      - name: Capgo Probe Evaluation
         if: steps.native.outputs.skip != 'true'
         env:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
         run: |
-          echo "==== Probing Update for Current Native (1.2.2) ===="
-          npx --yes @capgo/cli@latest probe --platform android > probe_current.txt
+          npx --yes @capgo/cli@latest channel set audit_test com.cuida.app --bundle $BUNDLE_VERSION --disable-auto-update metadata --no-downgrade
+          
+          # Fix build.gradle regex issue for capgo CLI probe
+          sed -i "s/versionCode .*/versionCode 1/" android/app/build.gradle
+          sed -i "s/versionName .*/versionName \"1.2.2\"/" android/app/build.gradle
+          
+          # Point local config to audit_test
+          sed -i "s/defaultChannel: 'production'/defaultChannel: 'audit_test'/" capacitor.config.ts
+          
+          echo "==== PROBING 1.2.2 ON METADATA STRATEGY ===="
+          npx --yes @capgo/cli@latest probe --platform android > probe_current.txt || true
           cat probe_current.txt
-          if ! grep -q "$BUNDLE_VERSION" probe_current.txt; then
-             echo "::error::Capgo probe indicates 1.2.2 will NOT receive $BUNDLE_VERSION."
-             exit 1
-          fi
           
-          echo "==== Probing Update for Older Native (1.2.0) ===="
-          # Temporarily downgrade package.json to trick probe into simulating an older app
+          echo "==== PROBING 1.2.0 ON METADATA STRATEGY ===="
           npm version 1.2.0 --no-git-tag-version
-          npx --yes @capgo/cli@latest probe --platform android > probe_old.txt
+          sed -i "s/versionName \"1.2.2\"/versionName \"1.2.0\"/" android/app/build.gradle
+          npx --yes @capgo/cli@latest probe --platform android > probe_old.txt || true
           cat probe_old.txt
-          if grep -q "$BUNDLE_VERSION" probe_old.txt; then
-             echo "::error::Security Failure: Capgo probe indicates 1.2.0 WOULD receive $BUNDLE_VERSION!"
+          
+          git restore android/app/build.gradle package.json package-lock.json capacitor.config.ts
+          
+          if ! grep -q "$BUNDLE_VERSION" probe_current.txt; then
+             echo "::error::1.2.2 WILL NOT receive $BUNDLE_VERSION. Keeping production rolled back."
              exit 1
           fi
           
-          git restore package.json package-lock.json
+          if grep -q "$BUNDLE_VERSION" probe_old.txt; then
+             echo "::error::1.2.0 IS VULNERABLE! It would receive $BUNDLE_VERSION. Keeping production rolled back."
+             exit 1
+          fi
           
-          echo "✅ Strict audit passed: Capgo explicitly confirmed correct delivery logic in the cloud."
+          echo "✅ Probes verified! 1.2.2 gets the update, 1.2.0 is excluded."
+
+      - name: Promote to Production
+        if: steps.native.outputs.skip != 'true'
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: |
+          echo "Promoting $BUNDLE_VERSION to production channel..."
+          npx --yes @capgo/cli@latest channel set production com.cuida.app --bundle $BUNDLE_VERSION --disable-auto-update metadata --no-downgrade
