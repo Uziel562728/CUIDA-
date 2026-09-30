@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { useStore } from './store/useStore';
 import AppLayout from './components/layout/AppLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
@@ -37,20 +38,52 @@ const Placeholder = ({ title }: { title: string }) => (
 );
 
 function App() {
-  const { theme, primaryColor } = useStore();
+  const { theme, primaryColor, currentUser, notificationsPermissionRequested, setNotificationsPermissionRequested, setNotificationsEnabled } = useStore();
 
+  
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    const applyTheme = () => {
+      root.classList.remove('light', 'dark');
+      if (theme === 'system') {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        root.classList.add(systemTheme);
+      } else {
+        root.classList.add(theme);
+      }
+    };
+    
+    applyTheme();
+    
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQuery.addEventListener('change', applyTheme);
+      return () => mediaQuery.removeEventListener('change', applyTheme);
     }
     
     root.style.setProperty('--primary-custom', primaryColor);
   }, [theme, primaryColor]);
+
+  // Request notifications permission exactly once when a user is logged in
+  useEffect(() => {
+    const checkPerms = async () => {
+      if (currentUser && Capacitor.isNativePlatform() && !notificationsPermissionRequested) {
+        if (Capacitor.isPluginAvailable('LocalNotifications')) {
+          try {
+            const permStatus = await LocalNotifications.requestPermissions();
+            setNotificationsPermissionRequested(true);
+            if (permStatus.display === 'granted') {
+              setNotificationsEnabled(true);
+            }
+          } catch (e) {
+            console.warn('LocalNotifications plugin available but request failed:', e);
+          }
+        }
+      }
+    };
+    checkPerms();
+  }, [currentUser, notificationsPermissionRequested, setNotificationsPermissionRequested, setNotificationsEnabled]);
+
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {

@@ -28,12 +28,12 @@ export const hasPermission = (role: Role, action: string) => {
 
 // Simplified routing access
 export const canAccessRoute = (role: Role, path: string) => {
-  if (role === 'supplier') return path.startsWith('/proveedor');
+  if (role === 'supplier') return path.startsWith('/proveedor') ;
   if (path.startsWith('/proveedor')) return false; // Non-suppliers can't access provider panel
   
-  if (role === 'doctor' && (path === '/stock' || path === '/pedidos' || path === '/marketplace' || path === '/carrito' || path === '/configuracion')) return false;
-  if (role === 'nurse' && (path === '/pedidos' || path === '/marketplace' || path === '/carrito' || path === '/configuracion')) return false;
-  if (role === 'family' && (path === '/marketplace' || path === '/carrito' || path === '/configuracion')) return false;
+  if (role === 'doctor' && (path === '/stock' || path === '/pedidos' || path === '/marketplace' || path === '/carrito' )) return false;
+  if (role === 'nurse' && (path === '/pedidos' || path === '/marketplace' || path === '/carrito' )) return false;
+  if (role === 'family' && (path === '/marketplace' || path === '/carrito' )) return false;
   
   return true;
 };

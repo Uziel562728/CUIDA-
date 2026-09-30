@@ -14,10 +14,9 @@ export const scheduleReminderNotification = async (reminder: Reminder) => {
       return;
     }
 
-    // Calcular Date
     const parts = reminder.date.split('-');
     const timeParts = reminder.time.split(':');
-    const scheduleDate = new Date(
+    let scheduleDate = new Date(
       Number(parts[0]),
       Number(parts[1]) - 1,
       Number(parts[2]),
@@ -25,14 +24,42 @@ export const scheduleReminderNotification = async (reminder: Reminder) => {
       Number(timeParts[1])
     );
 
-    // Cancelar la anterior si existe, para no duplicar (usamos hash del ID para numérico)
+    // Cancelar la anterior si existe, para no duplicar
     await cancelReminderNotification(reminder.id);
 
-    // Si ya pasó, no programar
-    if (scheduleDate.getTime() < Date.now()) return;
+    const now = new Date();
+    const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    
+    // Si ya fue completado hoy, la próxima alarma debe ser mañana
+    const isCompletedToday = reminder.history?.some(h => h.date === todayStr);
 
-    // Numeric ID (LocalNotifications requiere numérico)
+    if (reminder.repeat === 'daily') {
+      // Ajustar base a hoy o mañana
+      scheduleDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        Number(timeParts[0]),
+        Number(timeParts[1])
+      );
+      
+      // Si la hora de hoy ya pasó o ya se completó hoy, pasamos a mañana
+      if (isCompletedToday || scheduleDate.getTime() <= now.getTime()) {
+        scheduleDate.setDate(scheduleDate.getDate() + 1);
+      }
+    } else {
+      // Si no es repetitivo y ya pasó, no programar
+      if (scheduleDate.getTime() < now.getTime()) return;
+    }
+
     const numericId = hashCode(reminder.id);
+
+    const scheduleObj: any = { at: scheduleDate };
+    if (reminder.repeat === 'daily') {
+      scheduleObj.every = 'day';
+    } else if (reminder.repeat === 'weekly') {
+      scheduleObj.every = 'week';
+    }
 
     await LocalNotifications.schedule({
       notifications: [
@@ -40,8 +67,7 @@ export const scheduleReminderNotification = async (reminder: Reminder) => {
           title: 'Recordatorio programado',
           body: 'Tienes un evento o actividad pendiente pronto.',
           id: numericId,
-          schedule: { at: scheduleDate },
-          smallIcon: 'ic_stat_icon_config_sample' // Default
+          schedule: scheduleObj
         }
       ]
     });
@@ -78,7 +104,7 @@ function hashCode(str: string): number {
   for (let i = 0, len = str.length; i < len; i++) {
       let chr = str.charCodeAt(i);
       hash = (hash << 5) - hash + chr;
-      hash |= 0; // Convert to 32bit integer
+      hash |= 0;
   }
   return Math.abs(hash);
 }
