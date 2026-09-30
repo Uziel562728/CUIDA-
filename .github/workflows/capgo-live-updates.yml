@@ -1,0 +1,81 @@
+name: CUIDA+ live updates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: capgo-production
+  cancel-in-progress: true
+
+jobs:
+  publish-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for native changes
+        id: native
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+        shell: bash
+        run: |
+          if [[ "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}"; then
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+            echo '::warning::Cannot compare with previous commit. Publish a signed APK, then run this workflow manually to seed Capgo.'
+            exit 0
+          fi
+          if git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -Eq '^(android/|ios/|capacitor\.config\.ts$)'; then
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+            echo '::warning::Native files changed; publish a signed APK before deploying these web assets over the air.'
+          else
+            echo 'skip=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Require Capgo token
+        if: steps.native.outputs.skip != 'true'
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: |
+          if [ -z "$CAPGO_TOKEN" ]; then
+            echo '::error::Add CAPGO_TOKEN in repository Actions secrets after registering com.cuida.app in Capgo.'
+            exit 1
+          fi
+
+      - name: Setup Node
+        if: steps.native.outputs.skip != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.native.outputs.skip != 'true'
+        run: npm ci
+
+      - name: Build Capacitor web assets
+        if: steps.native.outputs.skip != 'true'
+        run: |
+          npm run build:ota
+          test -f dist/index.html
+
+      - name: Publish to Capgo production
+        if: steps.native.outputs.skip != 'true'
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: npx --yes @capgo/cli@latest bundle upload com.cuida.app --path ./dist --channel production --auto-bump patch --fail-on-incompatible
