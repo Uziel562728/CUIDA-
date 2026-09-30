@@ -547,7 +547,7 @@ export const useStore = create<AppState>()(
           throw new Error('Permisos insuficientes para completar recordatorios.');
         }
         set((state) => {
-          let updatedReminder = null;
+          let updatedReminder: any = null;
           const newReminders = state.reminders.map(r => {
             if (r.id === id) {
               if (r.status === 'cancelled') return r;

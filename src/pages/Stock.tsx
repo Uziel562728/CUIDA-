@@ -105,8 +105,8 @@ export default function Stock() {
                   </div>
                   <div>
                     <span className="text-gray-500 dark:text-gray-400 block text-xs">Estimado Restante</span>
-                    <span className={\`font-semibold \${isCriticalStock ? 'text-danger' : isLowStock ? 'text-warning' : 'text-health'}\`}>
-                      {estDays !== null ? \`~\${estDays.toFixed(1)} días\` : 'N/A'}
+                    <span className={`font-semibold ${isCriticalStock ? 'text-danger' : isLowStock ? 'text-warning' : 'text-health'}`}>
+                      {estDays !== null ? `~${estDays.toFixed(1)} días` : 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -114,7 +114,7 @@ export default function Stock() {
                 {isAdmin && (
                   <div className="flex justify-end space-x-4 pt-2 border-t border-gray-50 dark:border-gray-700/50 mt-1">
                     <button 
-                      onClick={() => navigate(\`/marketplace?product=\${product.id}\`)}
+                      onClick={() => navigate(`/marketplace?product=${product.id}`)}
                       className="text-primary font-medium text-sm flex items-center"
                     >
                       <ShoppingCart className="w-4 h-4 mr-1" />
@@ -162,11 +162,11 @@ export default function Stock() {
                       {product.currentQuantity} <span className="text-sm font-normal text-gray-500 dark:text-gray-400">{product.unit}</span>
                     </td>
                     <td className="p-4 text-gray-500 dark:text-gray-400">
-                      {dailyCon > 0 ? \`\${dailyCon.toFixed(1)} / día\` : '-'}
+                      {dailyCon > 0 ? `${dailyCon.toFixed(1)} / día` : '-'}
                     </td>
                     <td className="p-4">
-                      <span className={\`font-semibold \${isCriticalStock ? 'text-danger' : isLowStock ? 'text-warning' : 'text-health'}\`}>
-                        {estDays !== null ? \`~\${estDays.toFixed(1)} días\` : 'Sin estimación'}
+                      <span className={`font-semibold ${isCriticalStock ? 'text-danger' : isLowStock ? 'text-warning' : 'text-health'}`}>
+                        {estDays !== null ? `~${estDays.toFixed(1)} días` : 'Sin estimación'}
                       </span>
                     </td>
                     <td className="p-4">
@@ -188,7 +188,7 @@ export default function Stock() {
                       {isAdmin && (
                         <div className="flex justify-end space-x-3">
                           <button 
-                            onClick={() => navigate(\`/marketplace?product=\${product.id}\`)}
+                            onClick={() => navigate(`/marketplace?product=${product.id}`)}
                             className="text-primary hover:text-primary-dark font-medium text-sm flex items-center"
                           >
                             <ShoppingCart className="w-4 h-4 mr-1" />
