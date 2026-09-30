@@ -80,7 +80,8 @@ jobs:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
         run: |
           echo "Rolling back production to safe state (1.0.10) to stop untested OTAs..."
-          npx --yes @capgo/cli@latest channel set production com.cuida.app --bundle 1.0.10 --disable-auto-update none || true
+          # CRITICAL: We MUST use --no-downgrade to prevent APK 1.2.2 from retrogressing to 1.0.10!
+          npx --yes @capgo/cli@latest channel set production com.cuida.app --bundle 1.0.10 --disable-auto-update none --no-downgrade || true
 
       - name: Publish Untethered Bundle for Testing
         if: steps.native.outputs.skip != 'true'
@@ -109,8 +110,8 @@ jobs:
           sed -i "s/versionCode .*/versionCode 1/" android/app/build.gradle
           sed -i "s/versionName .*/versionName \"1.2.2\"/" android/app/build.gradle
           
-          # Point local config to audit_test
-          sed -i "s/defaultChannel: 'production'/defaultChannel: 'audit_test'/" capacitor.config.ts
+          # Point local config to audit_test explicitly (Capgo requires 'channel' property)
+          sed -i "s/defaultChannel: 'production'/channel: 'audit_test', defaultChannel: 'audit_test'/" capacitor.config.ts
           
           echo "==== PROBING 1.2.2 ON METADATA STRATEGY ===="
           npx --yes @capgo/cli@latest probe --platform android > probe_current.txt || true
