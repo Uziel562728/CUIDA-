@@ -55,13 +55,13 @@ function App() {
     
     applyTheme();
     
+    root.style.setProperty('--primary-custom', primaryColor);
+
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       mediaQuery.addEventListener('change', applyTheme);
       return () => mediaQuery.removeEventListener('change', applyTheme);
     }
-    
-    root.style.setProperty('--primary-custom', primaryColor);
   }, [theme, primaryColor]);
 
   // Request notifications permission exactly once when a user is logged in
@@ -152,6 +152,7 @@ function App() {
           <Route path="catalogo" element={<ProviderCatalogo />} />
           <Route path="cotizaciones" element={<ProviderCotizaciones />} />
           <Route path="mas" element={<ProviderMas />} />
+          <Route path="configuracion" element={<Configuracion />} />
         </Route>
       </Routes>
     </HashRouter>

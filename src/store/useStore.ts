@@ -121,7 +121,7 @@ export const useStore = create<AppState>()(
       notificationsEnabled: false,
       setNotificationsEnabled: (notificationsEnabled) => {
         set((state) => {
-          if (!notificationsEnabled) cancelAllNotifications();
+          if (!notificationsEnabled) state.reminders.forEach(r => cancelReminderNotification(r.id));
           else state.reminders.forEach(r => { if (r.status === 'pending') scheduleReminderNotification(r); });
           return { notificationsEnabled };
         });
