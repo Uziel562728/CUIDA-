@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { useStore } from '../../store/useStore';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
@@ -8,7 +9,8 @@ import { motion } from 'framer-motion';
 import { canAccessRoute } from '../../lib/permissions';
 
 export default function AppLayout() {
-  const { currentUser, setCurrentUser, patient, generateDosesForDay } = useStore();
+  const { currentUser, setCurrentUser, patient, generateDosesForDay, hasSeenWelcome } = useStore();
+  if (!hasSeenWelcome) return <Navigate to="/welcome" replace />;
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -73,15 +75,11 @@ export default function AppLayout() {
         </header>
         
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Outlet />
-          </motion.div>
+          <AnimatePresence mode="wait">
+            <motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
       <BottomNav />

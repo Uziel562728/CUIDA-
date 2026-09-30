@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import { CalendarClock, Activity, Users, Calendar, AlertTriangle, Package, ShoppingCart, FileText, BarChart, Settings, LogOut, Clock, Pill, User } from 'lucide-react';
 import { canAccessRoute } from '../lib/permissions';
+import { isSponsorsEnabled } from '../config/sponsors';
+import { SponsorsList } from '../components/SponsorLogos';
 
 export default function Mas() {
   const navigate = useNavigate();
@@ -84,6 +86,19 @@ export default function Mas() {
           </div>
         );
       })}
+
+      {isSponsorsEnabled && (
+        <div className="mb-6">
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider px-4 mb-2">Aliados</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 grid grid-cols-2 gap-4">
+            {SponsorsList.map(Sponsor => (
+              <div key={Sponsor.id} className="flex items-center justify-center p-2 h-16">
+                <Sponsor.Component className="w-full h-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-6">
         <button

@@ -10,6 +10,8 @@ import { hasPermission } from '../lib/permissions';
 import { scheduleReminderNotification, cancelReminderNotification, cancelAllNotifications } from '../lib/notifications';
 
 interface AppState {
+  hasSeenWelcome: boolean;
+  setHasSeenWelcome: (value: boolean) => void;
   theme: 'light' | 'dark' | 'system';
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   primaryColor: string;
@@ -114,6 +116,8 @@ const initialState = {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
+      hasSeenWelcome: false,
+      setHasSeenWelcome: (hasSeenWelcome) => set({ hasSeenWelcome }),
       theme: 'system',
       setTheme: (theme) => set({ theme }),
       primaryColor: '#27AE60',

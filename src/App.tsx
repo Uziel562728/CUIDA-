@@ -8,6 +8,7 @@ import { useStore } from './store/useStore';
 import AppLayout from './components/layout/AppLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
 import Login from './pages/Login';
+import Welcome from './pages/Welcome';
 import Dashboard from './pages/Dashboard';
 import PatientProfile from './pages/PatientProfile';
 import Medications from './pages/Medications';
@@ -88,6 +89,7 @@ function App() {
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       CapacitorUpdater.notifyAppReady();
+      import('@capacitor/splash-screen').then(m => m.SplashScreen.hide().catch(console.error));
     }
     const handleBackButton = async (event: { canGoBack: boolean }) => {
       // Create a custom event that can be cancelled
@@ -123,6 +125,7 @@ function App() {
     <HashRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/welcome" element={<Welcome />} />
         
         <Route path="/" element={<AppLayout />}>
           <Route index element={<Dashboard />} />
