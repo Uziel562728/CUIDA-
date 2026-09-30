@@ -49,7 +49,10 @@ export default function Dashboard() {
             <User className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-gray-500 uppercase tracking-wide">Paciente</p>
+            <div className="flex items-center space-x-2">
+              <p className="text-sm text-gray-500 uppercase tracking-wide">Paciente</p>
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-bold">Prueba de actualización: OK</span>
+            </div>
             <h2 className="text-xl font-bold text-gray-900 leading-tight">{patient.name}</h2>
           </div>
         </div>
