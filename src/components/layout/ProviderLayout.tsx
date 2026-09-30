@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
-import { LogOut, Package, ShoppingBag, FileText, Menu } from 'lucide-react';
+import { LogOut, Package, ShoppingBag, FileText, Menu, Settings } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 
@@ -36,6 +36,9 @@ export default function ProviderLayout() {
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-600 hidden md:block">{currentUser.name}</span>
+          <button aria-label="Ajustes" onClick={() => navigate('/proveedor/configuracion')} className="p-2 text-gray-400 hover:text-primary transition-colors rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
+            <Settings className="w-5 h-5" />
+          </button>
           <button onClick={handleLogout} className="hidden md:flex items-center text-gray-500 hover:text-danger">
             <LogOut className="w-5 h-5" />
           </button>
@@ -60,9 +63,9 @@ export default function ProviderLayout() {
             </div>
             <span className="text-[10px] font-medium">Cotizaciones</span>
           </NavLink>
-          <NavLink to="/proveedor/mas" className={({isActive}) => cn("flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors", isActive ? "text-primary" : "text-gray-400 hover:text-gray-600")}>
-            <Menu className="w-6 h-6"/>
-            <span className="text-[10px] font-medium">Más</span>
+          <NavLink to="/proveedor/configuracion" className={({isActive}) => cn("flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors", isActive ? "text-primary" : "text-gray-400 hover:text-gray-600")}>
+            <Settings className="w-6 h-6"/>
+            <span className="text-[10px] font-medium">Ajustes</span>
           </NavLink>
         </div>
       </nav>

@@ -5,10 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { useHardwareBack } from '../hooks/useHardwareBack';
 import { hasPermission } from '../lib/permissions';
 import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 const COLORS = [
-  { id: '#1E3A5F', name: 'Azul Petróleo' },
   { id: '#27AE60', name: 'Verde Salud' },
   { id: '#8E44AD', name: 'Púrpura' },
   { id: '#E67E22', name: 'Naranja' },
@@ -26,6 +27,30 @@ export default function Configuracion() {
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
   const [sysPerm, setSysPerm] = useState<string>('prompt');
+  const [appVersion, setAppVersion] = useState<string>('');
+  const [bundleVersion, setBundleVersion] = useState<string>('');
+  
+  useEffect(() => {
+    const fetchVersions = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const info = await CapApp.getInfo();
+          setAppVersion(info.version + ' (' + info.build + ')');
+          
+          if (Capacitor.isPluginAvailable('CapacitorUpdater')) {
+            const bundleInfo = await CapacitorUpdater.current();
+            setBundleVersion(bundleInfo.bundle?.version || 'Nativo');
+          }
+        } catch (e) {
+          console.warn('Error fetching versions', e);
+        }
+      } else {
+        setAppVersion('Web');
+        setBundleVersion('Web');
+      }
+    };
+    fetchVersions();
+  }, []);
   
   useHardwareBack(showConfirm, () => setShowConfirm(false));
 

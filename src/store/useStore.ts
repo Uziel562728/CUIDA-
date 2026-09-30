@@ -116,7 +116,7 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       theme: 'system',
       setTheme: (theme) => set({ theme }),
-      primaryColor: '#1E3A5F',
+      primaryColor: '#27AE60',
       setPrimaryColor: (primaryColor) => set({ primaryColor }),
       notificationsEnabled: false,
       setNotificationsEnabled: (notificationsEnabled) => {
@@ -704,7 +704,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'cuida-plus-storage', // unique name
-      version: 2, // versioning bumped
+      version: 3, // versioning bumped
       migrate: (persistedState: any, version: number) => {
         if (version === 1) {
           // Si migramos desde v1, conservamos los datos previos combinados con la estructura nueva
