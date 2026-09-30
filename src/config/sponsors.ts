@@ -12,12 +12,6 @@ export const sponsors = [
     source: 'https://logo.clearbit.com/swissmedical.com.ar'
   },
   {
-    id: 'galeno',
-    name: 'Galeno',
-    logoUrl: '/logos/galeno.png',
-    source: 'https://logo.clearbit.com/galeno.com.ar'
-  },
-  {
     id: 'hospital-italiano',
     name: 'Hospital Italiano',
     logoUrl: '/logos/hospital_italiano.png',
