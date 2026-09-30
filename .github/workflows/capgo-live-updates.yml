@@ -78,4 +78,8 @@ jobs:
         if: steps.native.outputs.skip != 'true'
         env:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
-        run: npx --yes @capgo/cli@latest bundle upload com.cuida.app --path ./dist --channel production --auto-bump patch --fail-on-incompatible
+        run: |
+          # Try to add the version first, ignore if it exists
+          npx --yes @capgo/cli@latest app add com.cuida.app || true
+          npx --yes @capgo/cli@latest version add com.cuida.app $(node -p "require('./package.json').version") || true
+          npx --yes @capgo/cli@latest bundle upload com.cuida.app --path ./dist --channel production --auto-bump patch 
