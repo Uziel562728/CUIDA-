@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore'
-import { getLocalDateString, getLocalTimeString } from '../utils/date';
+import { getLocalDateString, getLocalTimeString, formatTime12h, formatDateDDMMYYYY } from '../utils/date';
 import { Calendar, CheckCircle, Clock } from 'lucide-react';
 import { useHardwareBack } from '../hooks/useHardwareBack';
 
@@ -60,7 +60,7 @@ export default function Turnos() {
                 <Clock className="w-8 h-8 animate-pulse" />
               </div>
               <h3 className="text-xl font-bold mb-2">Turno en curso</h3>
-              <p className="text-gray-500 mb-6">Iniciado hoy a las {activeShift.startTime}</p>
+              <p className="text-gray-500 mb-6">Iniciado hoy a las {formatTime12h(activeShift.startTime)}</p>
               <button 
                 onClick={() => { setActiveShiftId(activeShift.id); setShowEndModal(true); }}
                 className="bg-danger text-white px-8 py-3 rounded-lg font-bold w-full md:w-auto"
@@ -151,8 +151,8 @@ export default function Turnos() {
                   </div>
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p><strong>Inicio:</strong> {s.date} {s.startTime}</p>
-                  {s.status === 'completed' && <p><strong>Fin:</strong> {s.endDate || s.date} {s.endTime}</p>}
+                  <p><strong>Inicio:</strong> {formatDateDDMMYYYY(s.date)} {formatTime12h(s.startTime)}</p>
+                  {s.status === 'completed' && <p><strong>Fin:</strong> {formatDateDDMMYYYY(s.endDate || s.date)} {formatTime12h(s.endTime)}</p>}
                 </div>
               </div>
               

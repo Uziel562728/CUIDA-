@@ -1,0 +1,100 @@
+  const handleExportPDF = async () => {
+    try {
+      const jsPDF = (await import('jspdf')).default;
+      const doc = new jsPDF();
+      
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      
+      doc.setFillColor(30, 58, 95); 
+      doc.rect(0, 0, pageWidth, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.text('CUIDA+', margin, 20);
+      doc.setFontSize(12);
+      
+      // Handle long title
+      const title = `Reporte de Horas y Asistencia - Período: ${periodStr}`;
+      doc.text(title, 60, 20);
+      
+      let y = 40;
+      doc.setTextColor(0, 0, 0);
+
+      let totalMinsGlobal = 0;
+
+      filteredCaregivers.forEach(cg => {
+        const cgShifts = shifts.filter(s => s.userId === cg.id);
+        let cgMins = 0;
+        let cgShiftDetails: string[] = [];
+
+        cgShifts.forEach(s => {
+          const start = new Date(`${s.date}T${s.startTime}`);
+          if (s.status === 'completed' && s.endDate && s.endTime) {
+            const end = new Date(`${s.endDate}T${s.endTime}`);
+            const mins = calculateOverlapMinutes(start, end, monthStart, monthEnd);
+            if (mins > 0) {
+              cgMins += mins;
+              totalMinsGlobal += mins;
+              const isOverlap = overlappingShiftIds.has(s.id);
+              cgShiftDetails.push(`• Finalizado: ${s.date} ${s.startTime} a ${s.endDate} ${s.endTime} - ${(mins / 60).toFixed(2)}h ${isOverlap ? '(Solapado)' : ''}`);
+            }
+          } else if (s.status === 'active' && start < monthEnd) {
+             cgShiftDetails.push(`• Abierto: ${s.date} ${s.startTime} (Sin finalizar)`);
+          }
+        });
+
+        if (cgShiftDetails.length > 0) {
+          if (y > pageHeight - 40) { doc.addPage(); y = 20; }
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(12);
+          
+          const caregiverTitle = `Cuidador: ${cg.name} (${cg.role}) - Total Cerrado: ${(cgMins / 60).toFixed(2)}h`;
+          const wrappedTitle = doc.splitTextToSize(caregiverTitle, pageWidth - 2 * margin);
+          
+          doc.text(wrappedTitle, margin, y);
+          y += wrappedTitle.length * 6;
+          
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          cgShiftDetails.forEach(detail => {
+            const wrappedDetail = doc.splitTextToSize(detail, pageWidth - 2 * margin - 5);
+            if (y + (wrappedDetail.length * 5) > pageHeight - 20) { doc.addPage(); y = 20; }
+            doc.text(wrappedDetail, margin + 5, y);
+            y += wrappedDetail.length * 5;
+          });
+          y += 5;
+        }
+      });
+
+      if (y > pageHeight - 30) { doc.addPage(); y = 20; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(`Total General Período: ${(totalMinsGlobal / 60).toFixed(2)} horas`, margin, y);
+
+      const fileName = `reporte_horas_${periodStr}.pdf`;
+      
+      if (Capacitor.isNativePlatform()) {
+        const base64Data = doc.output('datauristring').split(',')[1];
+        const result = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+        await Share.share({
+          title: fileName,
+          url: result.uri,
+          dialogTitle: 'Compartir o guardar reporte PDF'
+        });
+      } else {
+        doc.save(fileName);
+      }
+    } catch (err: any) {
+      setErrorMsg('Error al generar el PDF.');
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-5xl mx-auto pb-20">
+      

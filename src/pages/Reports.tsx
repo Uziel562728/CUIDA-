@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore'
-import { getLocalDateString } from '../utils/date';
+import { getLocalDateString, formatTime12h, formatDateDDMMYYYY } from '../utils/date';
 import { FileDown, FileText } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { Capacitor } from '@capacitor/core';
@@ -34,68 +34,91 @@ export default function Reports() {
     setTimeout(async () => {
       try {
         const doc = new jsPDF();
+        const autoTable = (await import('jspdf-autotable')).default;
         
         const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
         const margin = 20;
-        const maxTextWidth = pageWidth - margin * 2;
         
         // Header
-        doc.setFillColor(30, 58, 95); // Primary color
-        doc.rect(0, 0, 210, 40, 'F');
+        doc.setFillColor(30, 58, 95);
+        doc.rect(0, 0, pageWidth, 40, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(24);
+        doc.setFont("helvetica", "bold");
         doc.text('CUIDA+', margin, 25);
         doc.setFontSize(12);
-        doc.text('Reporte Clínico', 150, 25);
+        doc.text('Reporte Clínico', pageWidth - margin - 40, 25);
         
         let y = 50;
         doc.setTextColor(0, 0, 0);
 
-        const checkPageBreak = (spaceNeeded: number) => {
-          if (y + spaceNeeded > 280) {
-            doc.addPage();
-            y = 20;
-          }
-        };
-
-        const writeWrappedText = (text: string, fontSize: number, bold: boolean = false, xOff: number = 0) => {
-          doc.setFontSize(fontSize);
-          doc.setFont("helvetica", bold ? "bold" : "normal");
-          const lines = doc.splitTextToSize(text, maxTextWidth - xOff);
-          checkPageBreak(lines.length * (fontSize * 0.4));
-          doc.text(lines, margin + xOff, y);
-          y += lines.length * (fontSize * 0.4) + 2;
+        const addSectionTitle = (title: string) => {
+          if (y > pageHeight - 40) { doc.addPage(); y = 20; }
+          doc.setFontSize(14);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 58, 95);
+          doc.text(title, margin, y);
+          y += 8;
+          doc.setDrawColor(200, 200, 200);
+          doc.line(margin, y - 5, pageWidth - margin, y - 5);
+          doc.setTextColor(0, 0, 0);
+          doc.setFont("helvetica", "normal");
         };
 
         if (selected.personal) {
-          checkPageBreak(50);
-          writeWrappedText('Datos Personales y Médicos', 16, true);
+          addSectionTitle('Datos Personales y Médicos');
+          doc.setFontSize(10);
+          const personalData = [
+            ['Paciente', `${patient.name} (${patient.age} años)`],
+            ['Contacto', `${patient.mainContact} (${patient.mainContactPhone})`],
+            ['Obra Social', patient.healthInsurance],
+            ['Alergias', patient.allergies.join(', ') || 'Ninguna'],
+            ['Diagnósticos', patient.diagnoses.join(', ')],
+            ['Observaciones', patient.observations]
+          ];
+          
+          autoTable(doc, {
+            startY: y,
+            body: personalData,
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 2 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 35 } },
+            margin: { left: margin, right: margin },
+            didDrawPage: (data: any) => { if (data.cursor) y = data.cursor.y + 5; }
+          });
           y += 5;
-          writeWrappedText(`Paciente: ${patient.name} (${patient.age} años)`, 11);
-          writeWrappedText(`Contacto: ${patient.mainContact} (${patient.mainContactPhone})`, 11);
-          writeWrappedText(`Obra Social: ${patient.healthInsurance}`, 11);
-          writeWrappedText(`Alergias: ${patient.allergies.join(', ') || 'Ninguna'}`, 11);
-          writeWrappedText(`Diagnósticos: ${patient.diagnoses.join(', ')}`, 11);
-          writeWrappedText(`Observaciones: ${patient.observations}`, 11);
-          y += 10;
         }
 
         if (selected.medication) {
-          checkPageBreak(20);
-          writeWrappedText('Tratamientos Activos', 16, true);
-          y += 5;
+          addSectionTitle('Tratamientos Activos');
           const activeT = treatments.filter(t => t.status === 'active');
           if (activeT.length === 0) {
-            writeWrappedText('Sin tratamientos activos.', 11);
+            doc.setFontSize(10);
+            doc.text('Sin tratamientos activos.', margin, y);
+            y += 8;
           } else {
-            activeT.forEach(t => {
-              writeWrappedText(`• ${t.medicationName} ${t.presentation} - ${t.quantityPerDose} ${t.unit} (${t.frequency})`, 11);
+            const tableData = activeT.map(t => [
+              t.medicationName,
+              t.presentation,
+              `${t.quantityPerDose} ${t.unit}`,
+              t.frequency,
+              t.schedules.map(formatTime12h).join(', ')
+            ]);
+            autoTable(doc, {
+              startY: y,
+              head: [['Medicamento', 'Presentación', 'Dosis', 'Frecuencia', 'Horarios']],
+              body: tableData,
+              theme: 'striped',
+              headStyles: { fillColor: [240, 240, 240], textColor: [0,0,0] },
+              styles: { fontSize: 9 },
+              margin: { left: margin, right: margin },
+              didDrawPage: (data: any) => { if (data.cursor) y = data.cursor.y + 5; }
             });
+            y += 5;
           }
-          y += 10;
         }
         
-        // Last 7 days calc (today and previous 6 days)
         const todayStr = getLocalDateString();
         const parts = todayStr.split('-');
         const todayDateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
@@ -104,108 +127,191 @@ export default function Reports() {
         const limitStr = `${sixDaysAgo.getFullYear()}-${String(sixDaysAgo.getMonth()+1).padStart(2,'0')}-${String(sixDaysAgo.getDate()).padStart(2,'0')}`;
         
         if (selected.tomas) {
-          checkPageBreak(20);
-          writeWrappedText('Tomas de Medicación (Últimos 7 días)', 16, true);
-          y += 5;
-          const recentDoses = doses.filter(d => d.date >= limitStr && d.date <= todayStr && d.status !== 'pending').sort((a,b) => (b.date + b.actualTime).localeCompare(a.date + a.actualTime));
+          addSectionTitle('Tomas de Medicación (Últimos 7 días)');
+          const recentDoses = doses.filter(d => d.date >= limitStr && d.date <= todayStr && d.status !== 'pending').sort((a,b) => (b.date + (b.actualTime || '')).localeCompare(a.date + (a.actualTime || '')));
           if (recentDoses.length === 0) {
-            writeWrappedText('Sin tomas registradas.', 11);
+            doc.setFontSize(10);
+            doc.text('Sin tomas registradas.', margin, y);
+            y += 8;
           } else {
-            recentDoses.forEach(d => {
+            const tableData = recentDoses.map(d => {
               const t = treatments.find(tr => tr.id === d.treatmentId);
-              const statusTxt = d.status === 'taken' ? 'Tomado' : 'Omitido';
-              writeWrappedText(`• ${d.date} ${d.actualTime} - ${t?.medicationName} (${statusTxt}) por ${d.registeredBy}`, 11);
-              if (d.status === 'missed' && d.observations) {
-                writeWrappedText(`  Motivo: ${d.observations}`, 10, false, 5);
-              }
+              return ([
+                formatDateDDMMYYYY(d.date),
+                formatTime12h(d.actualTime || d.scheduledTime),
+                t ? t.medicationName : 'Desconocido',
+                d.status === 'taken' ? 'Tomado' : 'Omitido',
+                d.registeredBy,
+                d.status === 'missed' ? (d.observations || '') : ''
+              ] as string[]);
             });
+            autoTable(doc, {
+              startY: y,
+              head: [['Fecha', 'Hora', 'Medicamento', 'Estado', 'Por', 'Motivo']],
+              body: tableData,
+              theme: 'striped',
+              headStyles: { fillColor: [240, 240, 240], textColor: [0,0,0] },
+              styles: { fontSize: 9 },
+              margin: { left: margin, right: margin },
+              didDrawPage: (data: any) => { if (data.cursor) y = data.cursor.y + 5; }
+            });
+            y += 5;
           }
-          y += 10;
         }
 
         if (selected.vitals) {
-          checkPageBreak(20);
-          writeWrappedText('Controles Vitales (Últimos 7 días)', 16, true);
-          y += 5;
+          addSectionTitle('Controles Vitales (Últimos 7 días)');
           const recentVitals = vitalSigns.filter(v => v.date >= limitStr && v.date <= todayStr).sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
           if (recentVitals.length === 0) {
-            writeWrappedText('Sin controles registrados.', 11);
+            doc.setFontSize(10);
+            doc.text('Sin controles registrados.', margin, y);
+            y += 8;
           } else {
-            recentVitals.forEach(v => {
-              writeWrappedText(`• ${v.date} ${v.time}: ${v.type} - ${v.value} ${v.unit} (${v.registeredBy})`, 11);
+            const tableData = recentVitals.map(v => [
+              formatDateDDMMYYYY(v.date),
+              formatTime12h(v.time),
+              v.type,
+              `${v.value} ${v.unit}`,
+              v.registeredBy
+            ]);
+            autoTable(doc, {
+              startY: y,
+              head: [['Fecha', 'Hora', 'Tipo', 'Valor', 'Por']],
+              body: tableData,
+              theme: 'striped',
+              headStyles: { fillColor: [240, 240, 240], textColor: [0,0,0] },
+              styles: { fontSize: 9 },
+              margin: { left: margin, right: margin },
+              didDrawPage: (data: any) => { if (data.cursor) y = data.cursor.y + 5; }
             });
+            y += 5;
           }
-          y += 10;
         }
         
         if (selected.incidentes) {
-          checkPageBreak(20);
-          writeWrappedText('Incidentes (Últimos 7 días)', 16, true);
-          y += 5;
+          addSectionTitle('Incidentes (Últimos 7 días)');
           const recentIncidents = incidents.filter(i => i.date >= limitStr && i.date <= todayStr).sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
           if (recentIncidents.length === 0) {
-            writeWrappedText('Sin incidentes.', 11);
+            doc.setFontSize(10);
+            doc.text('Sin incidentes.', margin, y);
+            y += 8;
           } else {
-            recentIncidents.forEach(i => {
-              writeWrappedText(`• ${i.date} ${i.time} - ${i.type} (${i.status})`, 11, true);
-              writeWrappedText(`  Desc: ${i.description}`, 11, false, 5);
-              writeWrappedText(`  Acciones: ${i.actions}`, 11, false, 5);
+            const tableData = recentIncidents.map(i => [
+              `${formatDateDDMMYYYY(i.date)} ${formatTime12h(i.time)}`,
+              i.type,
+              i.status,
+              i.description,
+              i.actions
+            ]);
+            autoTable(doc, {
+              startY: y,
+              head: [['Fecha/Hora', 'Tipo', 'Estado', 'Descripción', 'Acciones']],
+              body: tableData,
+              theme: 'grid',
+              headStyles: { fillColor: [240, 240, 240], textColor: [0,0,0] },
+              styles: { fontSize: 9, cellPadding: 3 },
+              columnStyles: { 3: { cellWidth: 50 }, 4: { cellWidth: 50 } },
+              margin: { left: margin, right: margin },
+              didDrawPage: (data: any) => { if (data.cursor) y = data.cursor.y + 5; }
             });
+            y += 5;
           }
-          y += 10;
         }
         
         if (selected.turnos) {
-          checkPageBreak(20);
-          writeWrappedText('Turnos (Últimos 7 días)', 16, true);
-          y += 5;
+          addSectionTitle('Turnos (Últimos 7 días)');
           const recentShifts = shifts.filter(s => s.date >= limitStr && s.date <= todayStr).sort((a,b) => (b.date + b.startTime).localeCompare(a.date + a.startTime));
           if (recentShifts.length === 0) {
-            writeWrappedText('Sin turnos.', 11);
+            doc.setFontSize(10);
+            doc.text('Sin turnos.', margin, y);
+            y += 8;
           } else {
-            recentShifts.forEach(s => {
-              writeWrappedText(`• ${s.date} ${s.startTime} - ${s.userName} (${s.status})`, 11, true);
-              if (s.report) {
-                writeWrappedText(`  Parte: ${s.report}`, 11, false, 5);
-              }
+            const tableData = recentShifts.map(s => [
+              formatDateDDMMYYYY(s.date),
+              formatTime12h(s.startTime),
+              s.userName,
+              s.status,
+              s.report || ''
+            ]);
+            autoTable(doc, {
+              startY: y,
+              head: [['Fecha', 'Inicio', 'Cuidador', 'Estado', 'Parte']],
+              body: tableData,
+              theme: 'striped',
+              headStyles: { fillColor: [240, 240, 240], textColor: [0,0,0] },
+              styles: { fontSize: 9 },
+              margin: { left: margin, right: margin },
+              didDrawPage: (data: any) => { if (data.cursor) y = data.cursor.y + 5; }
             });
+            y += 5;
           }
-          y += 10;
         }
 
         if (selected.documents) {
-          checkPageBreak(20);
-          writeWrappedText('Documentos y Estudios Clínicos', 16, true);
-          y += 5;
+          addSectionTitle('Documentos y Estudios Clínicos');
           if (documents.length === 0) {
-            writeWrappedText('Sin registros.', 11);
+            doc.setFontSize(10);
+            doc.text('Sin registros.', margin, y);
+            y += 8;
           } else {
-            documents.forEach(d => {
-              writeWrappedText(`• ${d.date} | ${d.name} (${d.category}) - Dr/a. ${d.professional}`, 11);
-              if (d.description) {
-                writeWrappedText(`  Desc: ${d.description}`, 11, false, 5);
-              }
+            const tableData = documents.map(d => [
+              formatDateDDMMYYYY(d.date),
+              d.name,
+              d.category,
+              `Dr/a. ${d.professional}`,
+              d.description || ''
+            ]);
+            autoTable(doc, {
+              startY: y,
+              head: [['Fecha', 'Documento', 'Categoría', 'Profesional', 'Desc.']],
+              body: tableData,
+              theme: 'striped',
+              headStyles: { fillColor: [240, 240, 240], textColor: [0,0,0] },
+              styles: { fontSize: 9 },
+              margin: { left: margin, right: margin },
+              didDrawPage: (data: any) => { if (data.cursor) y = data.cursor.y + 5; }
             });
+            y += 5;
           }
-          y += 10;
         }
         
         if (selected.timeline) {
-          checkPageBreak(20);
-          writeWrappedText('Historial Cronológico (Últimos 7 días)', 16, true);
-          y += 5;
+          addSectionTitle('Historial Cronológico (Últimos 7 días)');
           const recentEvents = timeline.filter(t => t.date >= limitStr && t.date <= todayStr).sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
           if (recentEvents.length === 0) {
-            writeWrappedText('Sin eventos.', 11);
+            doc.setFontSize(10);
+            doc.text('Sin eventos.', margin, y);
+            y += 8;
           } else {
-            recentEvents.forEach(e => {
-              writeWrappedText(`[${e.date} ${e.time}] ${e.title} - ${e.user}`, 10, true);
-              writeWrappedText(`${e.description}`, 10, false, 5);
+            const tableData = recentEvents.map(e => [
+              `${formatDateDDMMYYYY(e.date)} ${formatTime12h(e.time)}`,
+              e.title,
+              e.user,
+              e.description
+            ]);
+            autoTable(doc, {
+              startY: y,
+              head: [['Fecha/Hora', 'Título', 'Usuario', 'Descripción']],
+              body: tableData,
+              theme: 'striped',
+              headStyles: { fillColor: [240, 240, 240], textColor: [0,0,0] },
+              styles: { fontSize: 9 },
+              margin: { left: margin, right: margin },
+              didDrawPage: (data: any) => { if (data.cursor) y = data.cursor.y + 5; }
             });
           }
         }
 
         const fileName = `Reporte_CuidaPlus_${todayStr}.pdf`;
+
+        // Page numbers
+        const pageCount = (doc as any).internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(150, 150, 150);
+          doc.text(`Página ${i} de ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
 
         if (Capacitor.isNativePlatform()) {
           const base64Data = doc.output('datauristring').split(',')[1];

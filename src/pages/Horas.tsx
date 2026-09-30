@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { Clock, Download, Edit2, AlertTriangle, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { formatTime12h, formatDateDDMMYYYY } from '../utils/date';
 import { hasPermission } from '../lib/permissions';
 import { Caregiver, Shift } from '../types';
 import { Capacitor } from '@capacitor/core';
@@ -148,10 +149,10 @@ export default function Horas() {
   const handleExportPDF = async () => {
     try {
       const jsPDF = (await import('jspdf')).default;
+      const autoTable = (await import('jspdf-autotable')).default;
       const doc = new jsPDF();
       
       const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 15;
       
       doc.setFillColor(30, 58, 95); 
@@ -161,19 +162,16 @@ export default function Horas() {
       doc.text('CUIDA+', margin, 20);
       doc.setFontSize(12);
       
-      // Handle long title
       const title = `Reporte de Horas y Asistencia - Período: ${periodStr}`;
-      doc.text(title, 60, 20);
+      doc.text(doc.splitTextToSize(title, pageWidth - margin - 60), 60, 20);
       
       let y = 40;
-      doc.setTextColor(0, 0, 0);
-
       let totalMinsGlobal = 0;
 
       filteredCaregivers.forEach(cg => {
         const cgShifts = shifts.filter(s => s.userId === cg.id);
         let cgMins = 0;
-        let cgShiftDetails: string[] = [];
+        const rows: any[] = [];
 
         cgShifts.forEach(s => {
           const start = new Date(`${s.date}T${s.startTime}`);
@@ -184,37 +182,46 @@ export default function Horas() {
               cgMins += mins;
               totalMinsGlobal += mins;
               const isOverlap = overlappingShiftIds.has(s.id);
-              cgShiftDetails.push(`• Finalizado: ${s.date} ${s.startTime} a ${s.endDate} ${s.endTime} - ${(mins / 60).toFixed(2)}h ${isOverlap ? '(Solapado)' : ''}`);
+              rows.push([
+                `${formatDateDDMMYYYY(s.date)} ${formatTime12h(s.startTime)}`,
+                `${formatDateDDMMYYYY(s.endDate)} ${formatTime12h(s.endTime)}`,
+                `${(mins / 60).toFixed(2)}h`,
+                isOverlap ? 'Solapado' : 'Finalizado'
+              ]);
             }
           } else if (s.status === 'active' && start < monthEnd) {
-             cgShiftDetails.push(`• Abierto: ${s.date} ${s.startTime} (Sin finalizar)`);
+            rows.push([
+              `${formatDateDDMMYYYY(s.date)} ${formatTime12h(s.startTime)}`,
+              '--',
+              '--',
+              'Sin finalizar'
+            ]);
           }
         });
 
-        if (cgShiftDetails.length > 0) {
-          if (y > pageHeight - 40) { doc.addPage(); y = 20; }
-          doc.setFont("helvetica", "bold");
+        if (rows.length > 0) {
+          doc.setTextColor(0, 0, 0);
           doc.setFontSize(12);
-          
+          doc.setFont("helvetica", "bold");
           const caregiverTitle = `Cuidador: ${cg.name} (${cg.role}) - Total Cerrado: ${(cgMins / 60).toFixed(2)}h`;
-          const wrappedTitle = doc.splitTextToSize(caregiverTitle, pageWidth - 2 * margin);
-          
-          doc.text(wrappedTitle, margin, y);
-          y += wrappedTitle.length * 6;
-          
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(10);
-          cgShiftDetails.forEach(detail => {
-            const wrappedDetail = doc.splitTextToSize(detail, pageWidth - 2 * margin - 5);
-            if (y + (wrappedDetail.length * 5) > pageHeight - 20) { doc.addPage(); y = 20; }
-            doc.text(wrappedDetail, margin + 5, y);
-            y += wrappedDetail.length * 5;
-          });
+          doc.text(caregiverTitle, margin, y);
           y += 5;
+
+          autoTable(doc, {
+            startY: y,
+            head: [['Inicio', 'Fin', 'Horas', 'Estado']],
+            body: rows,
+            theme: 'striped',
+            headStyles: { fillColor: [30, 58, 95] },
+            margin: { left: margin, right: margin },
+            didDrawPage: (data: any) => {
+              if (data.cursor) y = data.cursor.y + 10;
+            }
+          });
         }
       });
 
-      if (y > pageHeight - 30) { doc.addPage(); y = 20; }
+      doc.setTextColor(0, 0, 0);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.text(`Total General Período: ${(totalMinsGlobal / 60).toFixed(2)} horas`, margin, y);
@@ -236,7 +243,7 @@ export default function Horas() {
       } else {
         doc.save(fileName);
       }
-    } catch (err: any) {
+    } catch (err) {
       setErrorMsg('Error al generar el PDF.');
       console.error(err);
     }

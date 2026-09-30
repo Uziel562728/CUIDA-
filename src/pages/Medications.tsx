@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore'
-import { getLocalDateString } from '../utils/date';
+import { getLocalDateString, formatTime12h } from '../utils/date';
 import { Pill, Plus, Clock } from 'lucide-react';
 import { hasPermission } from '../lib/permissions';
 import { useHardwareBack } from '../hooks/useHardwareBack';
@@ -170,8 +170,13 @@ export default function Medications() {
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Horarios (coma sep)</label>
+                  <label className="block text-sm font-medium mb-1">Horarios (24h, coma sep)</label>
                   <input required className="w-full border rounded-lg p-3 bg-gray-50" placeholder="08:00, 20:00" value={form.schedules} onChange={e => setForm({...form, schedules: e.target.value})} />
+                  {form.schedules && (
+                    <p className="text-xs text-primary mt-1">
+                      Vista previa: {form.schedules.split(',').map(s => formatTime12h(s.trim())).join(', ')}
+                    </p>
+                  )}
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-1">Indicaciones</label>
@@ -200,7 +205,7 @@ export default function Medications() {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center text-primary font-black text-2xl">
                       <Clock className="w-6 h-6 mr-2 opacity-50" />
-                      {d.scheduledTime}
+                      {formatTime12h(d.scheduledTime)}
                     </div>
                     <span className={`px-3 py-1 text-xs font-bold rounded-full ${
                       d.status === 'taken' ? 'bg-health/10 text-health' : 
@@ -231,7 +236,7 @@ export default function Medications() {
                   )
                 ) : (
                   <div className="text-sm text-gray-500 pt-3 border-t border-gray-50 bg-gray-50/50 p-2 rounded-lg">
-                    <span className="block font-medium">Registrado a las {d.actualTime}</span>
+                    <span className="block font-medium">Registrado a las {formatTime12h(d.actualTime)}</span>
                     <span className="block text-xs">Por: {d.registeredBy}</span>
                     {d.observations && <span className="block italic mt-2 text-xs text-danger">Motivo: {d.observations}</span>}
                   </div>
@@ -252,7 +257,7 @@ export default function Medications() {
               <div className="space-y-2 text-sm text-gray-600 pl-4">
                 <p><strong>Presentación:</strong> {treat.presentation}</p>
                 <p><strong>Dosis:</strong> {treat.quantityPerDose} {treat.unit} ({treat.frequency})</p>
-                <p><strong>Horarios:</strong> {treat.schedules.join(', ')}</p>
+                <p><strong>Horarios:</strong> {treat.schedules.map(formatTime12h).join(', ')}</p>
                 {treat.indications && <p className="text-xs italic mt-2 bg-gray-50 p-2 rounded-lg">{treat.indications}</p>}
               </div>
             </div>

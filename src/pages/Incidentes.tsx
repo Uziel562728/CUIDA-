@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore'
-import { getLocalDateString, getLocalTimeString } from '../utils/date';
+import { getLocalDateString, getLocalTimeString, formatTime12h, formatDateDDMMYYYY } from '../utils/date';
 import { AlertTriangle, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { hasPermission } from '../lib/permissions';
 import { useHardwareBack } from '../hooks/useHardwareBack';
@@ -98,7 +98,7 @@ export default function Incidentes() {
                 <AlertTriangle className={`w-5 h-5 mr-2 ${inc.status === 'resolved' ? 'text-health' : inc.status === 'attention' ? 'text-warning' : 'text-danger'}`}/> 
                 {inc.type}
               </h3>
-              <span className="text-sm text-gray-500 font-medium">{inc.date} {inc.time}</span>
+              <span className="text-sm text-gray-500 font-medium">{formatDateDDMMYYYY(inc.date)} {formatTime12h(inc.time)}</span>
             </div>
             <div className="pl-4 space-y-2 text-sm text-gray-700">
               <p><strong>Descripción:</strong> {inc.description}</p>
@@ -111,7 +111,7 @@ export default function Incidentes() {
               <ul className="space-y-2 mb-4">
                 {inc.history.map((h, i) => (
                   <li key={i} className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                    <strong>{h.date} {h.time} ({h.status}):</strong> {h.note || 'Sin notas.'} - <em>{h.user}</em>
+                    <strong>{formatDateDDMMYYYY(h.date)} {formatTime12h(h.time)} ({h.status}):</strong> {h.note || 'Sin notas.'} - <em>{h.user}</em>
                   </li>
                 ))}
               </ul>

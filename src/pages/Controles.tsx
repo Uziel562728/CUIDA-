@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore'
-import { getLocalDateString, getLocalTimeString } from '../utils/date';
+import { getLocalDateString, getLocalTimeString, formatTime12h, formatDateDDMMYYYY } from '../utils/date';
 import { Activity, Plus, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { VitalSign } from '../types';
 import { hasPermission } from '../lib/permissions';
@@ -143,7 +143,7 @@ export default function Controles() {
                 <Activity className="w-10 h-10 p-2 rounded-full bg-info/10 text-info mr-3 flex-shrink-0" />
                 <div>
                   <p className="font-bold text-gray-900">{types.find(t => t.id === v.type)?.label || v.type}</p>
-                  <p className="text-xs text-gray-500">{v.date} {v.time} • {v.registeredBy}</p>
+                  <p className="text-xs text-gray-500">{formatDateDDMMYYYY(v.date)} {formatTime12h(v.time)} • {v.registeredBy}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore'
-import { getLocalDateString } from '../utils/date';
+import { getLocalDateString, formatTime12h, formatDateDDMMYYYY } from '../utils/date';
 import { CalendarClock, CheckCircle, Circle, Plus, Trash2, Edit2 } from 'lucide-react';
 import { Reminder } from '../types';
 import { hasPermission } from '../lib/permissions';
@@ -164,7 +164,7 @@ export default function Recordatorios() {
               </button>
               <div>
                 <p className={`font-bold ${r.status === 'completed' ? 'line-through text-gray-500' : 'text-gray-900'}`}>{r.title}</p>
-                <p className="text-sm text-gray-500">{r.date === todayStr ? 'Hoy' : r.date} - {r.time} {r.repeat === 'daily' ? '(Diario)' : ''}</p>
+                <p className="text-sm text-gray-500">{r.date === todayStr ? 'Hoy' : formatDateDDMMYYYY(r.date)} - {formatTime12h(r.time)} {r.repeat === 'daily' ? '(Diario)' : ''}</p>
               </div>
             </div>
             {canManage && (

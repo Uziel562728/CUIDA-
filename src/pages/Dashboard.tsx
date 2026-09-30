@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore'
-import { getLocalDateString } from '../utils/date';
+import { getLocalDateString, formatTime12h } from '../utils/date';
 import { Pill, Calendar, AlertCircle, Package, Clock, CheckCircle, ChevronRight, PlayCircle, StopCircle, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { hasPermission } from '../lib/permissions';
@@ -87,7 +87,7 @@ export default function Dashboard() {
           <div>
             <h3 className="font-bold text-gray-900 mb-1">Mi Turno</h3>
             <p className="text-sm text-gray-600">
-              {activeShift ? `En curso desde las ${activeShift.startTime}` : 'No tienes un turno activo'}
+              {activeShift ? `En curso desde las ${formatTime12h(activeShift.startTime)}` : 'No tienes un turno activo'}
             </p>
           </div>
           <button 
@@ -107,7 +107,7 @@ export default function Dashboard() {
         </div>
         {nextDose && nextTreatment ? (
           <div>
-            <p className="text-2xl font-bold text-gray-900 mb-1">{nextDose.scheduledTime}</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{formatTime12h(nextDose.scheduledTime)}</p>
             <p className="text-lg font-medium text-gray-800">{nextTreatment.medicationName} {nextTreatment.presentation}</p>
             <p className="text-gray-500">{nextTreatment.quantityPerDose} {nextTreatment.unit}</p>
             

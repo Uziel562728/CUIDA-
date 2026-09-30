@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore'
-import { getLocalDateString } from '../utils/date';
+import { getLocalDateString, formatTime12h, formatDateDDMMYYYY } from '../utils/date';
 import { Clock, Filter, Activity, Pill, User, AlertTriangle, FileText, ShoppingCart } from 'lucide-react';
 import { TimelineEvent } from '../types';
 import gsap from 'gsap';
@@ -96,7 +96,7 @@ export default function Timeline() {
               <div key={date}>
                 <div className="relative mb-6">
                   <span className="absolute -left-[1.3rem] md:-left-[2.35rem] top-0 bg-gray-100 px-3 py-1 rounded-full text-xs font-semibold text-gray-600 border border-gray-200">
-                    {date === getLocalDateString() ? 'HOY' : date}
+                    {date === getLocalDateString() ? 'HOY' : formatDateDDMMYYYY(date)}
                   </span>
                 </div>
                 
@@ -110,7 +110,7 @@ export default function Timeline() {
                       <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 hover:shadow-md transition-shadow">
                         <div className="flex flex-col md:flex-row justify-between md:items-start mb-2">
                           <h4 className="font-bold text-gray-900">{event.title}</h4>
-                          <span className="text-sm font-semibold text-gray-500">{event.time}</span>
+                          <span className="text-sm font-semibold text-gray-500">{formatTime12h(event.time)}</span>
                         </div>
                         <p className="text-gray-700 text-sm mb-3">{event.description}</p>
                         <div className="flex items-center text-xs text-gray-500 pt-2 border-t border-gray-200">

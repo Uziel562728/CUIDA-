@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../store/useStore'
-import { getLocalDateString } from '../utils/date';
+import { getLocalDateString, formatTime12h, formatDateDDMMYYYY } from '../utils/date';
 import { Package, Truck, CheckCircle } from 'lucide-react';
 
 export default function ProviderPedidos() {
@@ -41,7 +41,7 @@ export default function ProviderPedidos() {
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pb-4 border-b">
                 <div>
                   <h3 className="font-bold text-lg">Pedido #{order.id}</h3>
-                  <p className="text-sm text-gray-500">{order.date} {order.time} - Destino: {(order as any).patientName || 'Paciente'} ({(order as any).deliveryAddress || 'Dirección no especificada'})</p>
+                  <p className="text-sm text-gray-500">{formatDateDDMMYYYY(order.date)} {formatTime12h(order.time)} - Destino: {(order as any).patientName || 'Paciente'} ({(order as any).deliveryAddress || 'Dirección no especificada'})</p>
                 </div>
                 <div className="mt-2 md:mt-0 px-3 py-1 bg-gray-100 rounded-full font-bold text-sm">
                   TOTAL: ${order.total.toLocaleString('es-AR')}
