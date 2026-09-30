@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local signing and Capgo credentials
+*.jks
+*.keystore
+.capgo_key_v2
+.env.capgo.*
