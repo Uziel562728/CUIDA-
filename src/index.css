@@ -21,18 +21,6 @@
   :root {
     --primary-custom: #27AE60;
   }
-  .dark {
-    --color-white: #1e293b;
-    --color-gray-50: #0f172a;
-    --color-gray-100: #334155;
-    --color-gray-200: #475569;
-    --color-gray-300: #64748b;
-    --color-gray-400: #94a3b8;
-    --color-gray-500: #cbd5e1;
-    --color-gray-600: #e2e8f0;
-    --color-gray-700: #f1f5f9;
-    --color-gray-800: #f8fafc;
-    --color-gray-900: #ffffff;
-  }
+  
   
 }

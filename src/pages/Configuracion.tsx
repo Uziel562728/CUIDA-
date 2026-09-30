@@ -55,8 +55,8 @@ export default function Configuracion() {
   useHardwareBack(showConfirm, () => setShowConfirm(false));
 
   useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      LocalNotifications.checkPermissions().then(res => setSysPerm(res.display));
+    if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('LocalNotifications')) {
+      LocalNotifications.checkPermissions().then(res => setSysPerm(res.display)).catch(err => console.error(err));
     }
   }, [notificationsEnabled]);
 
@@ -69,6 +69,10 @@ export default function Configuracion() {
   const handleToggleNotifications = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
     if (checked && Capacitor.isNativePlatform()) {
+      if (!Capacitor.isPluginAvailable('LocalNotifications')) {
+        setNotificationsEnabled(false);
+        return;
+      }
       try {
         let perm = await LocalNotifications.checkPermissions();
         if (perm.display !== 'granted') {
