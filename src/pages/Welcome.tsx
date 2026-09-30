@@ -127,7 +127,7 @@ export default function Welcome() {
         className="p-6 relative z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: buttonTransitionDelay, duration: transitionDuration }}
+        transition={{ delay: 0, duration: 0 }}
       >
         <button
           onClick={handleContinue}
