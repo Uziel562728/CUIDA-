@@ -40,9 +40,12 @@ jobs:
             echo '::warning::Cannot compare with previous commit. Publish a signed APK, then run this workflow manually to seed Capgo.'
             exit 0
           fi
-          # We allow OTA uploads even if native changed, 
-          # because we will enforce native compatibility using --min-update-version
-          echo 'skip=false' >> "$GITHUB_OUTPUT"
+          if git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -Eq '^(android/|ios/|capacitor\.config\.ts$)'; then
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+            echo '::warning::Native files changed; publish a signed APK before deploying these web assets over the air.'
+          else
+            echo 'skip=false' >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Require Capgo token
         if: steps.native.outputs.skip != 'true'

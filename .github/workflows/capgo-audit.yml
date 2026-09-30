@@ -1,0 +1,25 @@
+name: Capgo Audit
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Audit Capgo Config
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: |
+          if [ -z "$CAPGO_TOKEN" ]; then
+            echo "No token found"
+            exit 1
+          fi
+          echo "==== CHANNELS ===="
+          npx --yes @capgo/cli@latest channel list com.cuida.app
+          echo "==== BUNDLES ===="
+          npx --yes @capgo/cli@latest bundle list com.cuida.app
