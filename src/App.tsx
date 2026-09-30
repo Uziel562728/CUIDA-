@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Capacitor } from '@capacitor/core';
+import { useStore } from './store/useStore';
 import AppLayout from './components/layout/AppLayout';
 import ProviderLayout from './components/layout/ProviderLayout';
 import Login from './pages/Login';
@@ -36,6 +37,21 @@ const Placeholder = ({ title }: { title: string }) => (
 );
 
 function App() {
+  const { theme, primaryColor } = useStore();
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(theme);
+    }
+    
+    root.style.setProperty('--primary-custom', primaryColor);
+  }, [theme, primaryColor]);
+
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       CapacitorUpdater.notifyAppReady();

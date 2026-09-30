@@ -8,7 +8,7 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#1E3A5F', // Azul petróleo
+          DEFAULT: 'var(--primary-custom)', // Azul petróleo
           light: '#3A5A84'
         },
         secondary: {

@@ -3,7 +3,7 @@ import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
-import { LogOut, Bell } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { canAccessRoute } from '../../lib/permissions';
 
@@ -59,7 +59,7 @@ export default function AppLayout() {
           </div>
           <div className="flex items-center space-x-4">
             <button aria-label="Notificaciones" className="relative p-2 text-gray-400 hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded-full">
-              <Bell className="w-6 h-6" />
+              <Settings className="w-6 h-6" />
               <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-danger rounded-full border-2 border-white"></span>
             </button>
             <button 

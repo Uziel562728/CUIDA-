@@ -7,8 +7,18 @@ import {
 
 import { getLocalDateString, getLocalTimeString } from '../utils/date';
 import { hasPermission } from '../lib/permissions';
+import { scheduleReminderNotification, cancelReminderNotification, cancelAllNotifications } from '../lib/notifications';
 
 interface AppState {
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  primaryColor: string;
+  setPrimaryColor: (color: string) => void;
+  notificationsEnabled: boolean;
+  setNotificationsEnabled: (enabled: boolean) => void;
+  notificationsPermissionRequested: boolean;
+  setNotificationsPermissionRequested: (req: boolean) => void;
+
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
   resetDemoData: () => void;
@@ -104,6 +114,20 @@ const initialState = {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
+      theme: 'system',
+      setTheme: (theme) => set({ theme }),
+      primaryColor: '#1E3A5F',
+      setPrimaryColor: (primaryColor) => set({ primaryColor }),
+      notificationsEnabled: false,
+      setNotificationsEnabled: (notificationsEnabled) => {
+        set((state) => {
+          if (!notificationsEnabled) cancelAllNotifications();
+          else state.reminders.forEach(r => { if (r.status === 'pending') scheduleReminderNotification(r); });
+          return { notificationsEnabled };
+        });
+      },
+      notificationsPermissionRequested: false,
+      setNotificationsPermissionRequested: (notificationsPermissionRequested) => set({ notificationsPermissionRequested }),
       currentUser: null,
       setCurrentUser: (user) => set({ currentUser: user }),
       resetDemoData: () => {
@@ -512,7 +536,11 @@ export const useStore = create<AppState>()(
       
       addReminder: (rem) => {
         if (!get().currentUser || !hasPermission(get().currentUser!.role, 'manage_reminders')) throw new Error('Permisos insuficientes');
-        set((state) => ({ reminders: [...state.reminders, rem] }));
+        set((state) => {
+        const newState = { reminders: [...state.reminders, rem] };
+        if (get().notificationsEnabled) scheduleReminderNotification(rem);
+        return newState;
+      });
       },
       completeReminder: (id) => {
         if (!get().currentUser || !hasPermission(get().currentUser!.role, 'manage_reminders')) {
@@ -538,11 +566,18 @@ export const useStore = create<AppState>()(
       },
       deleteReminder: (id) => {
         if (!get().currentUser || !hasPermission(get().currentUser!.role, 'manage_reminders')) throw new Error('Permisos insuficientes');
-        set((state) => ({ reminders: state.reminders.filter(r => r.id !== id) }));
+        set((state) => {
+        if (get().notificationsEnabled) cancelReminderNotification(id);
+        return { reminders: state.reminders.filter(r => r.id !== id) };
+      });
       },
       updateReminder: (id, updates) => {
         if (!get().currentUser || !hasPermission(get().currentUser!.role, 'manage_reminders')) throw new Error('Permisos insuficientes');
-        set((state) => ({ reminders: state.reminders.map(r => r.id === id ? { ...r, ...updates } : r) }));
+        set((state) => {
+        const newRem = state.reminders.find(r => r.id === id);
+        if (newRem && get().notificationsEnabled) scheduleReminderNotification({ ...newRem, ...updates });
+        return { reminders: state.reminders.map(r => r.id === id ? { ...r, ...updates } : r) };
+      });
       },
 
       updateProviderProduct: (providerId, productId, updates) => {

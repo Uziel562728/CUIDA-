@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { useStore } from '../store/useStore'
 import { getLocalDateString } from '../utils/date';
 import { HeartPulse } from 'lucide-react';
@@ -24,7 +26,23 @@ export default function Login() {
     generateDosesForDay(getLocalDateString());
   }, [generateDosesForDay]);
 
-  const handleLogin = (user: User) => {
+  const handleLogin = async (user: User) => {
+    
+    
+    // Configuración inicial de notificaciones
+    const storeState = useStore.getState();
+    if (Capacitor.isNativePlatform() && !storeState.notificationsPermissionRequested) {
+      try {
+        const permStatus = await LocalNotifications.requestPermissions();
+        storeState.setNotificationsPermissionRequested(true);
+        if (permStatus.display === 'granted') {
+          storeState.setNotificationsEnabled(true);
+        }
+      } catch (e) {
+        console.warn('LocalNotifications permission request failed:', e);
+      }
+    }
+
     // In a real app we would check the 'remember me' checkbox
     setCurrentUser(user);
     if (user.role === 'supplier') {
