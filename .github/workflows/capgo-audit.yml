@@ -11,6 +11,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          
       - name: Audit Capgo Config
         env:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
@@ -19,7 +24,26 @@ jobs:
             echo "No token found"
             exit 1
           fi
+          
+          APP_VERSION=$(node -p "require('./package.json').version")
+          
           echo "==== CHANNELS ===="
-          npx --yes @capgo/cli@latest channel list com.cuida.app
+          npx --yes @capgo/cli@latest channel list com.cuida.app > channels.txt
+          cat channels.txt
+          
+          if ! grep -iq "metadata" channels.txt; then
+            echo "::error::production channel does not use metadata strategy!"
+            exit 1
+          fi
+          
           echo "==== BUNDLES ===="
-          npx --yes @capgo/cli@latest bundle list com.cuida.app
+          npx --yes @capgo/cli@latest bundle list com.cuida.app > bundles.txt
+          cat bundles.txt
+          
+          # Verify that the bundle with $APP_VERSION is present and matches the requirement
+          if ! grep -q "$APP_VERSION" bundles.txt; then
+            echo "::error::Bundle for $APP_VERSION not found!"
+            exit 1
+          fi
+          
+          echo "Capgo config is correct: metadata strategy is active and version is tied to $APP_VERSION."

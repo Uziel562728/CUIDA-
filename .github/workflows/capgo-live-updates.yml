@@ -74,10 +74,17 @@ jobs:
           npm run build:ota
           test -f dist/index.html
 
+      - name: Configure Capgo Channel
+        if: steps.native.outputs.skip != 'true'
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: |
+          npx --yes @capgo/cli@latest channel set production com.cuida.app --disable-auto-update metadata
+
       - name: Publish to Capgo production
         if: steps.native.outputs.skip != 'true'
         env:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
         run: |
           APP_VERSION=$(node -p "require('./package.json').version")
-          npx --yes @capgo/cli@latest bundle upload com.cuida.app --path ./dist --channel production --auto-bump patch --min-update-version $APP_VERSION 
+          npx --yes @capgo/cli@latest bundle upload com.cuida.app --path ./dist --channel production --bundle $APP_VERSION-${{ github.run_number }} --min-update-version $APP_VERSION 
