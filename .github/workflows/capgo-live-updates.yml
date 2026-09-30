@@ -87,4 +87,42 @@ jobs:
           CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
         run: |
           APP_VERSION=$(node -p "require('./package.json').version")
-          npx --yes @capgo/cli@latest bundle upload com.cuida.app --path ./dist --channel production --bundle $APP_VERSION-${{ github.run_number }} --min-update-version $APP_VERSION 
+          MAJOR_MINOR=$(echo $APP_VERSION | cut -d. -f1,2)
+          BUNDLE_VERSION="${MAJOR_MINOR}.999${{ github.run_number }}"
+          echo "Uploading BUNDLE_VERSION=$BUNDLE_VERSION with min-update-version=$APP_VERSION"
+          npx --yes @capgo/cli@latest bundle upload com.cuida.app --path ./dist --channel production --bundle $BUNDLE_VERSION --min-update-version $APP_VERSION
+
+      - name: Capgo Strict Audit
+        if: steps.native.outputs.skip != 'true'
+        env:
+          CAPGO_TOKEN: ${{ secrets.CAPGO_TOKEN }}
+        run: |
+          APP_VERSION=$(node -p "require('./package.json').version")
+          MAJOR_MINOR=$(echo $APP_VERSION | cut -d. -f1,2)
+          BUNDLE_VERSION="${MAJOR_MINOR}.999${{ github.run_number }}"
+          
+          echo "==== Verifying Channel Strategy ===="
+          npx --yes @capgo/cli@latest channel list com.cuida.app > channels.txt
+          cat channels.txt
+          if ! grep -i "production" channels.txt | grep -iq "metadata"; then
+            echo "::error::production channel does not use metadata strategy!"
+            exit 1
+          fi
+          
+          echo "==== Verifying Current Assigned Bundle ===="
+          npx --yes @capgo/cli@latest channel currentBundle production com.cuida.app > current.txt
+          cat current.txt
+          if ! grep -q "$BUNDLE_VERSION" current.txt; then
+             echo "::error::Production channel is not pointing to our uploaded bundle $BUNDLE_VERSION!"
+             exit 1
+          fi
+          
+          echo "==== Verifying Bundle Properties ===="
+          npx --yes @capgo/cli@latest bundle list com.cuida.app > bundles.txt
+          cat bundles.txt
+          if ! grep "$BUNDLE_VERSION" bundles.txt | grep -q "$APP_VERSION"; then
+             echo "::error::Bundle $BUNDLE_VERSION does not enforce min_update_version $APP_VERSION!"
+             exit 1
+          fi
+          
+          echo "✅ Strict audit passed: Production channel uses metadata, points to $BUNDLE_VERSION, which enforces min native version $APP_VERSION."
